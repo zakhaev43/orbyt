@@ -1,3 +1,5 @@
+name: orbyt
+
 services:
   postgres:
     image: postgres:12-alpine
@@ -6,7 +8,12 @@ services:
     environment:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=swift_transfer
+      - POSTGRES_DB=orbyt
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root -d orbyt" ]
+      interval: 2s
+      timeout: 3s
+      retries: 15
   api:
     build:
       context: .
@@ -14,12 +21,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_SOURCE=postgresql://root:secret@postgres:5432/swift_transfer?sslmode=disable
+      - DB_SOURCE=postgresql://root:secret@postgres:5432/orbyt?sslmode=disable
       - ALLOWED_ORIGIN=http://localhost:3000
     depends_on:
-      - postgres
-    entrypoint: [ "/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh" ]
-    command: [ "/app/main" ]
+      postgres:
+        condition: service_healthy
   web:
     build:
       context: ./web

@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
-	db "github.com/zakhaev43/Swift-Transfer/db/sqlc"
-	"github.com/zakhaev43/Swift-Transfer/token"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	db "github.com/zakhaev43/orbyt/db/sqlc"
+	"github.com/zakhaev43/orbyt/token"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 type Server struct {
@@ -50,8 +50,12 @@ func (server *Server) setUpRouter() {
 	authRoutes.POST("/accounts", server.createAccount)
 	authRoutes.GET("/accounts/:id", server.getAccount)
 	authRoutes.GET("/accounts", server.listAccount)
-	authRoutes.DELETE("/accounts/:id", server.deleteAccount)
-	authRoutes.PUT("/accounts", server.updateAccount)
+	authRoutes.GET("/accounts/:id/statement", server.getAccountStatement)
+	authRoutes.POST("/accounts/:id/deposits", server.createDeposit)
+	authRoutes.POST("/accounts/:id/freeze", server.freezeAccount)
+	authRoutes.POST("/accounts/:id/unfreeze", server.unfreezeAccount)
+	authRoutes.POST("/accounts/:id/close", server.closeAccount)
+	authRoutes.GET("/payees/:id", server.getPayee)
 	authRoutes.POST("/transfers", server.createTransfer)
 	authRoutes.GET("/transfers", server.listTransfers)
 	authRoutes.GET("/ledger/verify", server.verifyLedger)

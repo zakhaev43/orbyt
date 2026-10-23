@@ -13,7 +13,7 @@ const addAccountBalance = `-- name: AddAccountBalance :one
 UPDATE accounts
 SET balance = balance + $1
 WHERE id = $2
-RETURNING id, owner, balance, currency, created_at
+RETURNING id, owner, balance, currency, created_at, status, kind
 `
 
 type AddAccountBalanceParams struct {
@@ -30,6 +30,8 @@ func (q *Queries) AddAccountBalance(ctx context.Context, arg AddAccountBalancePa
 		&i.Balance,
 		&i.Currency,
 		&i.CreatedAt,
+		&i.Status,
+		&i.Kind,
 	)
 	return i, err
 }
@@ -40,18 +42,17 @@ INSERT INTO accounts (
   balance,
   currency
 ) VALUES (
-  $1, $2, $3
-) RETURNING id, owner, balance, currency, created_at
+  $1, 0, $2
+) RETURNING id, owner, balance, currency, created_at, status, kind
 `
 
 type CreateAccountParams struct {
 	Owner    string `json:"owner"`
-	Balance  int64  `json:"balance"`
 	Currency string `json:"currency"`
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount, arg.Owner, arg.Balance, arg.Currency)
+	row := q.db.QueryRowContext(ctx, createAccount, arg.Owner, arg.Currency)
 	var i Account
 	err := row.Scan(
 		&i.ID,
@@ -59,22 +60,14 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.Balance,
 		&i.Currency,
 		&i.CreatedAt,
+		&i.Status,
+		&i.Kind,
 	)
 	return i, err
 }
 
-const deleteAccount = `-- name: DeleteAccount :exec
-DELETE FROM accounts
-WHERE id = $1
-`
-
-func (q *Queries) DeleteAccount(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteAccount, id)
-	return err
-}
-
 const getAccount = `-- name: GetAccount :one
-SELECT id, owner, balance, currency, created_at FROM accounts
+SELECT id, owner, balance, currency, created_at, status, kind FROM accounts
 WHERE id = $1 LIMIT 1
 `
 
@@ -87,16 +80,20 @@ func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
 		&i.Balance,
 		&i.Currency,
 		&i.CreatedAt,
+		&i.Status,
+		&i.Kind,
 	)
 	return i, err
 }
 
 const getAccountForUpdate = `-- name: GetAccountForUpdate :one
-SELECT id, owner, balance, currency, created_at FROM accounts
+SELECT id, owner, balance, currency, created_at, status, kind FROM accounts
 WHERE id = $1 LIMIT 1
 FOR NO KEY UPDATE
 `
 
+// FOR NO KEY UPDATE (not FOR UPDATE) so inserting entries/transfers that
+// reference this row via FK (which take FOR KEY SHARE) isn't blocked.
 func (q *Queries) GetAccountForUpdate(ctx context.Context, id int64) (Account, error) {
 	row := q.db.QueryRowContext(ctx, getAccountForUpdate, id)
 	var i Account
@@ -106,12 +103,35 @@ func (q *Queries) GetAccountForUpdate(ctx context.Context, id int64) (Account, e
 		&i.Balance,
 		&i.Currency,
 		&i.CreatedAt,
+		&i.Status,
+		&i.Kind,
+	)
+	return i, err
+}
+
+const getSystemAccount = `-- name: GetSystemAccount :one
+SELECT id, owner, balance, currency, created_at, status, kind FROM accounts
+WHERE kind = 'system' AND currency = $1
+LIMIT 1
+`
+
+func (q *Queries) GetSystemAccount(ctx context.Context, currency string) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getSystemAccount, currency)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+		&i.Status,
+		&i.Kind,
 	)
 	return i, err
 }
 
 const listAccounts = `-- name: ListAccounts :many
-SELECT id, owner, balance, currency, created_at FROM accounts
+SELECT id, owner, balance, currency, created_at, status, kind FROM accounts
 WHERE owner = $1
 ORDER BY id
 LIMIT $2
@@ -139,6 +159,8 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 			&i.Balance,
 			&i.Currency,
 			&i.CreatedAt,
+			&i.Status,
+			&i.Kind,
 		); err != nil {
 			return nil, err
 		}
@@ -153,20 +175,71 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 	return items, nil
 }
 
-const updateAccount = `-- name: UpdateAccount :one
-UPDATE accounts
-SET balance = $2
-WHERE id = $1
-RETURNING id, owner, balance, currency, created_at
+const listBalanceMismatches = `-- name: ListBalanceMismatches :many
+SELECT a.id, a.balance, COALESCE(SUM(e.amount), 0)::bigint AS ledger_balance
+FROM accounts a
+LEFT JOIN entries e ON e.account_id = a.id
+GROUP BY a.id
+HAVING a.balance <> COALESCE(SUM(e.amount), 0)
+ORDER BY a.id
 `
 
-type UpdateAccountParams struct {
-	ID      int64 `json:"id"`
-	Balance int64 `json:"balance"`
+type ListBalanceMismatchesRow struct {
+	ID            int64 `json:"id"`
+	Balance       int64 `json:"balance"`
+	LedgerBalance int64 `json:"ledger_balance"`
 }
 
-func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, updateAccount, arg.ID, arg.Balance)
+func (q *Queries) ListBalanceMismatches(ctx context.Context) ([]ListBalanceMismatchesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listBalanceMismatches)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListBalanceMismatchesRow{}
+	for rows.Next() {
+		var i ListBalanceMismatchesRow
+		if err := rows.Scan(&i.ID, &i.Balance, &i.LedgerBalance); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateAccountStatus = `-- name: UpdateAccountStatus :one
+UPDATE accounts
+SET status = $1
+WHERE id = $2
+  AND owner = $3
+  AND kind = 'customer'
+  AND status = $4
+  AND ($1::varchar <> 'closed' OR balance = 0)
+RETURNING id, owner, balance, currency, created_at, status, kind
+`
+
+type UpdateAccountStatusParams struct {
+	NewStatus  string `json:"new_status"`
+	ID         int64  `json:"id"`
+	Owner      string `json:"owner"`
+	FromStatus string `json:"from_status"`
+}
+
+// Conditional so it can't race a concurrent transfer: the row lock taken by
+// UPDATE makes Postgres re-check status/balance against the latest version.
+func (q *Queries) UpdateAccountStatus(ctx context.Context, arg UpdateAccountStatusParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, updateAccountStatus,
+		arg.NewStatus,
+		arg.ID,
+		arg.Owner,
+		arg.FromStatus,
+	)
 	var i Account
 	err := row.Scan(
 		&i.ID,
@@ -174,6 +247,8 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (A
 		&i.Balance,
 		&i.Currency,
 		&i.CreatedAt,
+		&i.Status,
+		&i.Kind,
 	)
 	return i, err
 }

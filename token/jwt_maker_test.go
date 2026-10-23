@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/require"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 func TestJWTMaker(t *testing.T) {

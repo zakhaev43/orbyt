@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zakhaev43/Swift-Transfer/token"
+	"github.com/zakhaev43/orbyt/token"
 )
 
 const (

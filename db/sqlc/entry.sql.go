@@ -7,24 +7,28 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"time"
 )
 
 const createEntry = `-- name: CreateEntry :one
 INSERT INTO entries (
   account_id,
-  amount
+  amount,
+  transaction_id
 ) VALUES (
-  $1, $2
-) RETURNING id, account_id, amount, created_at, prev_hash, hash
+  $1, $2, $3
+) RETURNING id, account_id, amount, created_at, prev_hash, hash, transaction_id
 `
 
 type CreateEntryParams struct {
-	AccountID int64 `json:"account_id"`
-	Amount    int64 `json:"amount"`
+	AccountID     int64         `json:"account_id"`
+	Amount        int64         `json:"amount"`
+	TransactionID sql.NullInt64 `json:"transaction_id"`
 }
 
 func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
-	row := q.db.QueryRowContext(ctx, createEntry, arg.AccountID, arg.Amount)
+	row := q.db.QueryRowContext(ctx, createEntry, arg.AccountID, arg.Amount, arg.TransactionID)
 	var i Entry
 	err := row.Scan(
 		&i.ID,
@@ -33,12 +37,13 @@ func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry
 		&i.CreatedAt,
 		&i.PrevHash,
 		&i.Hash,
+		&i.TransactionID,
 	)
 	return i, err
 }
 
 const getEntry = `-- name: GetEntry :one
-SELECT id, account_id, amount, created_at, prev_hash, hash FROM entries
+SELECT id, account_id, amount, created_at, prev_hash, hash, transaction_id FROM entries
 WHERE id = $1 LIMIT 1
 `
 
@@ -52,6 +57,7 @@ func (q *Queries) GetEntry(ctx context.Context, id int64) (Entry, error) {
 		&i.CreatedAt,
 		&i.PrevHash,
 		&i.Hash,
+		&i.TransactionID,
 	)
 	return i, err
 }
@@ -69,8 +75,96 @@ func (q *Queries) GetLastEntryHash(ctx context.Context) (string, error) {
 	return hash, err
 }
 
+const listAccountStatement = `-- name: ListAccountStatement :many
+SELECT
+  s.id,
+  s.transaction_id,
+  s.amount,
+  s.balance_after,
+  s.created_at,
+  COALESCE(t.kind, 'transfer')::varchar AS kind,
+  COALESCE(t.description, '')::varchar AS description,
+  COALESCE(cp.account_id, 0)::bigint AS counterparty_account_id,
+  COALESCE(ca.owner, '')::varchar AS counterparty_owner,
+  COALESCE(ca.kind, '')::varchar AS counterparty_kind
+FROM (
+  SELECT
+    e.id,
+    e.transaction_id,
+    e.amount,
+    e.created_at,
+    SUM(e.amount) OVER (ORDER BY e.id)::bigint AS balance_after
+  FROM entries e
+  WHERE e.account_id = $1
+) s
+LEFT JOIN transactions t ON t.id = s.transaction_id
+LEFT JOIN LATERAL (
+  SELECT o.account_id FROM entries o
+  WHERE o.transaction_id = s.transaction_id AND o.id <> s.id
+  ORDER BY o.id
+  LIMIT 1
+) cp ON true
+LEFT JOIN accounts ca ON ca.id = cp.account_id
+ORDER BY s.id DESC
+LIMIT $3
+OFFSET $2
+`
+
+type ListAccountStatementParams struct {
+	AccountID  int64 `json:"account_id"`
+	PageOffset int32 `json:"page_offset"`
+	PageLimit  int32 `json:"page_limit"`
+}
+
+type ListAccountStatementRow struct {
+	ID                    int64         `json:"id"`
+	TransactionID         sql.NullInt64 `json:"transaction_id"`
+	Amount                int64         `json:"amount"`
+	BalanceAfter          int64         `json:"balance_after"`
+	CreatedAt             time.Time     `json:"created_at"`
+	Kind                  string        `json:"kind"`
+	Description           string        `json:"description"`
+	CounterpartyAccountID int64         `json:"counterparty_account_id"`
+	CounterpartyOwner     string        `json:"counterparty_owner"`
+	CounterpartyKind      string        `json:"counterparty_kind"`
+}
+
+func (q *Queries) ListAccountStatement(ctx context.Context, arg ListAccountStatementParams) ([]ListAccountStatementRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAccountStatement, arg.AccountID, arg.PageOffset, arg.PageLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListAccountStatementRow{}
+	for rows.Next() {
+		var i ListAccountStatementRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TransactionID,
+			&i.Amount,
+			&i.BalanceAfter,
+			&i.CreatedAt,
+			&i.Kind,
+			&i.Description,
+			&i.CounterpartyAccountID,
+			&i.CounterpartyOwner,
+			&i.CounterpartyKind,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAllEntries = `-- name: ListAllEntries :many
-SELECT id, account_id, amount, created_at, prev_hash, hash FROM entries
+SELECT id, account_id, amount, created_at, prev_hash, hash, transaction_id FROM entries
 ORDER BY id
 `
 
@@ -90,6 +184,7 @@ func (q *Queries) ListAllEntries(ctx context.Context) ([]Entry, error) {
 			&i.CreatedAt,
 			&i.PrevHash,
 			&i.Hash,
+			&i.TransactionID,
 		); err != nil {
 			return nil, err
 		}
@@ -105,7 +200,7 @@ func (q *Queries) ListAllEntries(ctx context.Context) ([]Entry, error) {
 }
 
 const listEntries = `-- name: ListEntries :many
-SELECT id, account_id, amount, created_at, prev_hash, hash FROM entries
+SELECT id, account_id, amount, created_at, prev_hash, hash, transaction_id FROM entries
 WHERE account_id = $1
 ORDER BY id
 LIMIT $2
@@ -134,6 +229,7 @@ func (q *Queries) ListEntries(ctx context.Context, arg ListEntriesParams) ([]Ent
 			&i.CreatedAt,
 			&i.PrevHash,
 			&i.Hash,
+			&i.TransactionID,
 		); err != nil {
 			return nil, err
 		}
@@ -153,7 +249,7 @@ UPDATE entries
 SET prev_hash = $2,
     hash = $3
 WHERE id = $1
-RETURNING id, account_id, amount, created_at, prev_hash, hash
+RETURNING id, account_id, amount, created_at, prev_hash, hash, transaction_id
 `
 
 type SetEntryHashParams struct {
@@ -172,6 +268,7 @@ func (q *Queries) SetEntryHash(ctx context.Context, arg SetEntryHashParams) (Ent
 		&i.CreatedAt,
 		&i.PrevHash,
 		&i.Hash,
+		&i.TransactionID,
 	)
 	return i, err
 }

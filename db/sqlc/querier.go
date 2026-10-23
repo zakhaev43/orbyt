@@ -15,22 +15,32 @@ type Querier interface {
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
 	CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
+	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteAccount(ctx context.Context, id int64) error
 	GetAccount(ctx context.Context, id int64) (Account, error)
+	// FOR NO KEY UPDATE (not FOR UPDATE) so inserting entries/transfers that
+	// reference this row via FK (which take FOR KEY SHARE) isn't blocked.
 	GetAccountForUpdate(ctx context.Context, id int64) (Account, error)
 	GetEntry(ctx context.Context, id int64) (Entry, error)
 	GetLastEntryHash(ctx context.Context) (string, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
+	GetSystemAccount(ctx context.Context, currency string) (Account, error)
+	GetTransaction(ctx context.Context, id int64) (Transaction, error)
 	GetTransfer(ctx context.Context, id int64) (Transfer, error)
 	GetUser(ctx context.Context, username string) (User, error)
+	ListAccountStatement(ctx context.Context, arg ListAccountStatementParams) ([]ListAccountStatementRow, error)
 	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error)
 	ListAllEntries(ctx context.Context) ([]Entry, error)
+	ListBalanceMismatches(ctx context.Context) ([]ListBalanceMismatchesRow, error)
 	ListEntries(ctx context.Context, arg ListEntriesParams) ([]Entry, error)
 	ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error)
+	// Should always be empty: the entries_balanced trigger rejects these at commit.
+	ListUnbalancedTransactions(ctx context.Context) ([]ListUnbalancedTransactionsRow, error)
 	SetEntryHash(ctx context.Context, arg SetEntryHashParams) (Entry, error)
-	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error)
+	// Conditional so it can't race a concurrent transfer: the row lock taken by
+	// UPDATE makes Postgres re-check status/balance against the latest version.
+	UpdateAccountStatus(ctx context.Context, arg UpdateAccountStatusParams) (Account, error)
 }
 
 var _ Querier = (*Queries)(nil)
