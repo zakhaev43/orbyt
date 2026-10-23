@@ -1,67 +1,83 @@
 package api
 
 import (
-	"database/sql"
-	"errors"
-	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/zakhaev43/Swift-Transfer/db/sqlc"
-	"github.com/zakhaev43/Swift-Transfer/token"
 )
 
+// Amount is in minor units (e.g. cents).
 type transferRequest struct {
 	FromAccountID int64  `json:"from_account_id" binding:"required,min=1"`
-	ToAccountID   int64  `json:"to_account_id" binding:"required,min=1"`
+	ToAccountID   int64  `json:"to_account_id" binding:"required,min=1,nefield=FromAccountID"`
 	Amount        int64  `json:"amount" binding:"required,gt=0"`
 	Currency      string `json:"currency" binding:"required,currency"`
+	Description   string `json:"description" binding:"max=140"`
+}
+
+type transferRecord struct {
+	ID            int64     `json:"id"`
+	TransactionID *int64    `json:"transaction_id"`
+	FromAccountID int64     `json:"from_account_id"`
+	ToAccountID   int64     `json:"to_account_id"`
+	Amount        int64     `json:"amount"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+func newTransferRecord(t db.Transfer) transferRecord {
+	record := transferRecord{
+		ID:            t.ID,
+		FromAccountID: t.FromAccountID,
+		ToAccountID:   t.ToAccountID,
+		Amount:        t.Amount,
+		CreatedAt:     t.CreatedAt,
+	}
+	if t.TransactionID.Valid {
+		id := t.TransactionID.Int64
+		record.TransactionID = &id
+	}
+	return record
+}
+
+// The recipient's account is deliberately left out: the sender must not
+// learn the recipient's balance.
+type transferResponse struct {
+	Transaction db.Transaction `json:"transaction"`
+	Transfer    transferRecord `json:"transfer"`
+	FromAccount db.Account     `json:"from_account"`
 }
 
 func (server *Server) createTransfer(ctx *gin.Context) {
-
 	var req transferRequest
-
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-
 		return
 	}
 
-	fromAccount, valid := server.validAccount(ctx, req.FromAccountID, req.Currency)
-
-	if !valid {
+	if _, ok := server.loadOwnedAccount(ctx, req.FromAccountID); !ok {
 		return
 	}
 
-	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
-	if fromAccount.Owner != authPayload.Username {
-		err := errors.New("from account doesn't belong to the authenticated user")
-		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
-		return
-	}
-
-	_, valid = server.validAccount(ctx, req.ToAccountID, req.Currency)
-	if !valid {
-		return
-	}
-	arg := db.TransferTxParams{
-
+	result, err := server.store.TransferTx(ctx, db.TransferTxParams{
 		FromAccountID: req.FromAccountID,
 		ToAccountID:   req.ToAccountID,
 		Amount:        req.Amount,
-	}
-
-	result, err := server.store.TransferTx(ctx, arg)
-
+		Currency:      req.Currency,
+		Description:   strings.TrimSpace(req.Description),
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-
+		respondLedgerError(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, result)
-
+	ctx.JSON(http.StatusOK, transferResponse{
+		Transaction: result.Transaction,
+		Transfer:    newTransferRecord(result.Transfer),
+		FromAccount: result.FromAccount,
+	})
 }
 
 type listTransfersRequest struct {
@@ -77,20 +93,7 @@ func (server *Server) listTransfers(ctx *gin.Context) {
 		return
 	}
 
-	account, err := server.store.GetAccount(ctx, req.AccountID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
-	if account.Owner != authPayload.Username {
-		err := errors.New("account doesn't belong to the authenticated user")
-		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	if _, ok := server.loadOwnedAccount(ctx, req.AccountID); !ok {
 		return
 	}
 
@@ -105,32 +108,9 @@ func (server *Server) listTransfers(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, transfers)
-}
-
-func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency string) (db.Account, bool) {
-
-	account, err := server.store.GetAccount(ctx, accountID)
-
-	if err != nil {
-
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return account, false
-		}
-
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return account, false
-
+	records := make([]transferRecord, 0, len(transfers))
+	for _, t := range transfers {
+		records = append(records, newTransferRecord(t))
 	}
-
-	if account.Currency != currency {
-
-		err := fmt.Errorf("account [%d] currency mismatch: %s vs %s", account.ID, account.Currency, currency)
-
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-
-		return account, false
-	}
-	return account, true
+	ctx.JSON(http.StatusOK, records)
 }

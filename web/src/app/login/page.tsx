@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { loginUser, ApiError } from "@/lib/api";
-import { saveSession } from "@/lib/auth";
+import { useState } from "react";
+import { AuthLayout, PasswordInput } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { ErrorBanner } from "@/components/ui/Feedback";
+import { Alert } from "@/components/ui/Feedback";
 import { Input, Label } from "@/components/ui/Field";
-import { Logo } from "@/components/ui/Logo";
+import { ApiError, loginUser } from "@/lib/api";
+import { saveSession } from "@/lib/auth";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 export default function LoginPage() {
@@ -25,58 +24,59 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const session = await loginUser({ username, password });
+      const session = await loginUser({ username: username.trim(), password });
       saveSession(session);
-      router.push("/accounts");
+      router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "login failed");
+      if (err instanceof ApiError && (err.status === 401 || err.status === 404 || err.status === 400)) {
+        setError("That username and password don't match.");
+      } else {
+        setError(err instanceof ApiError ? err.message : "Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center p-6">
-      <Card className="w-full max-w-sm p-8">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <Logo size="lg" />
-          <h1 className="mt-3 text-xl font-semibold text-ink-primary">Log in</h1>
+    <AuthLayout title="Welcome back" subtitle="Log in to manage your accounts and send money.">
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            icon="user"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            autoFocus
+          />
+        </div>
+        <div>
+          <Label htmlFor="password">Password</Label>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
 
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div>
-            <Label>Username</Label>
-            <Input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-          <div>
-            <Label>Password</Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+        {error && <Alert>{error}</Alert>}
 
-          {error && <ErrorBanner message={error} />}
+        <Button type="submit" size="lg" loading={loading} className="mt-2 w-full">
+          Log in
+        </Button>
 
-          <Button type="submit" disabled={loading} className="mt-2 w-full">
-            {loading ? "Logging in…" : "Log in"}
-          </Button>
-
-          <p className="text-center text-sm text-ink-secondary">
-            No account?{" "}
-            <Link href="/register" className="font-medium text-brand hover:underline">
-              Register
-            </Link>
-          </p>
-        </form>
-      </Card>
-    </main>
+        <p className="pt-2 text-center text-sm text-ink-secondary">
+          New to Swift?{" "}
+          <Link href="/register" className="font-medium text-brand hover:underline">
+            Create an account
+          </Link>
+        </p>
+      </form>
+    </AuthLayout>
   );
 }

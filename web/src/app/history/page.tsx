@@ -1,121 +1,149 @@
 "use client";
 
-import useSWR from "swr";
+import { useMemo, useState } from "react";
+import { ActivityList } from "@/components/ActivityList";
 import AppShell from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
-import { EmptyState, ErrorBanner, LoadingState } from "@/components/ui/Feedback";
+import { EmptyState, ErrorBanner, ListSkeleton } from "@/components/ui/Feedback";
+import { Input } from "@/components/ui/Field";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Account, ApiError, listAccounts, listTransfers } from "@/lib/api";
-import { formatAmount, formatDateTime } from "@/lib/format";
+import { activitySubtitle, activityTitle } from "@/lib/activity";
+import { errorMessage } from "@/lib/api";
+import { useAccounts, useActivity } from "@/lib/hooks";
+import { formatMoney } from "@/lib/money";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
-type HistoryEntry = {
-  id: number;
-  createdAt: string;
-  direction: "sent" | "received";
-  counterpartAccountId: number;
-  amount: number;
-  currency: string;
-};
+type Filter = "all" | "in" | "out" | "topups";
 
-async function loadHistory(accounts: Account[]): Promise<HistoryEntry[]> {
-  const perAccount = await Promise.all(
-    accounts.map(async (account) => {
-      const transfers = await listTransfers(account.id);
-      return transfers.map((t) => {
-        const sent = t.from_account_id === account.id;
-        return {
-          id: t.id,
-          createdAt: t.created_at,
-          direction: sent ? ("sent" as const) : ("received" as const),
-          counterpartAccountId: sent ? t.to_account_id : t.from_account_id,
-          amount: t.amount,
-          currency: account.currency,
-        };
-      });
-    }),
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "in", label: "Money in" },
+  { id: "out", label: "Money out" },
+  { id: "topups", label: "Top-ups" },
+];
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`shrink-0 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
+        active ? "bg-ink-primary text-page" : "bg-surface-2 text-ink-secondary hover:text-ink-primary"
+      }`}
+    >
+      {children}
+    </button>
   );
-
-  return perAccount
-    .flat()
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 function HistoryView() {
-  useDocumentTitle("History");
-  const { data: accounts, error: accountsError, isLoading: loadingAccounts } = useSWR(
-    "accounts",
-    () => listAccounts(),
-  );
+  useDocumentTitle("Activity");
+  const { data: accounts, error: accountsError, isLoading: loadingAccounts } = useAccounts();
+  const { data: activity, error: activityError, isLoading: loadingActivity } = useActivity(accounts);
 
-  const {
-    data: history,
-    error: historyError,
-    isLoading: loadingHistory,
-  } = useSWR(accounts ? ["history", accounts.map((a) => a.id).join(",")] : null, () =>
-    loadHistory(accounts!),
-  );
+  const [filter, setFilter] = useState<Filter>("all");
+  const [accountId, setAccountId] = useState<number | "all">("all");
+  const [query, setQuery] = useState("");
 
-  const error = accountsError ?? historyError;
-  const isLoading = loadingAccounts || loadingHistory;
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (activity ?? []).filter((item) => {
+      if (accountId !== "all" && item.account.id !== accountId) return false;
+      const topUp = item.kind === "deposit" || item.counterparty_is_system;
+      if (filter === "topups" && !topUp) return false;
+      if (filter === "in" && (item.amount < 0 || topUp)) return false;
+      if (filter === "out" && item.amount > 0) return false;
+      if (q) {
+        const haystack = `${activityTitle(item)} ${activitySubtitle(item)} ${item.description}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [activity, filter, accountId, query]);
+
+  const totals = useMemo(() => {
+    const byCurrency = new Map<string, { in: number; out: number }>();
+    for (const item of filtered) {
+      const t = byCurrency.get(item.account.currency) ?? { in: 0, out: 0 };
+      if (item.amount > 0) t.in += item.amount;
+      else t.out += -item.amount;
+      byCurrency.set(item.account.currency, t);
+    }
+    return Array.from(byCurrency.entries());
+  }, [filtered]);
+
+  const error = accountsError ?? activityError;
+  const loading = loadingAccounts || loadingActivity;
+  const multipleAccounts = (accounts?.length ?? 0) > 1;
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title="Transaction history"
-        description="Every transfer into or out of your accounts, most recent first."
-      />
+    <div className="space-y-6">
+      <PageHeader title="Activity" description="Every movement across all of your accounts." />
 
-      {error && (
-        <ErrorBanner
-          message={error instanceof ApiError ? error.message : "failed to load history"}
-        />
-      )}
+      {error && <ErrorBanner message={errorMessage(error, "Couldn't load your activity.")} />}
 
-      {isLoading ? (
-        <LoadingState message="Loading transaction history…" />
-      ) : !history || history.length === 0 ? (
-        <EmptyState message="No transactions yet." />
-      ) : (
-        <Card className="divide-y divide-hairline overflow-hidden">
-          <div className="grid grid-cols-[auto_1fr_auto] gap-4 px-4 py-2.5 text-xs font-medium uppercase tracking-wide text-ink-muted">
-            <span>Type</span>
-            <span>Details</span>
-            <span className="text-right">Amount</span>
-          </div>
-          {history.map((entry) => (
-            <div
-              key={`${entry.id}-${entry.direction}`}
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-3 text-sm"
-            >
-              <span
-                className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  entry.direction === "received"
-                    ? "bg-status-good/10 text-status-good"
-                    : "bg-ink-primary/5 text-ink-secondary"
-                }`}
-              >
-                {entry.direction === "received" ? "Received" : "Sent"}
-              </span>
-              <div>
-                <div className="text-ink-primary">
-                  {entry.direction === "received" ? "From" : "To"} account #
-                  {entry.counterpartAccountId}
-                </div>
-                <div className="text-xs text-ink-muted">{formatDateTime(entry.createdAt)}</div>
-              </div>
-              <span
-                className={`tabular-nums text-right font-medium ${
-                  entry.direction === "received" ? "text-status-good" : "text-ink-primary"
-                }`}
-              >
-                {entry.direction === "received" ? "+" : "−"}
-                {formatAmount(entry.amount, entry.currency)}
-              </span>
-            </div>
+      <div className="space-y-3">
+        <Input icon="search" placeholder="Search by name or note" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+          {FILTERS.map((f) => (
+            <Chip key={f.id} active={filter === f.id} onClick={() => setFilter(f.id)}>
+              {f.label}
+            </Chip>
           ))}
-        </Card>
+          {multipleAccounts && <span className="mx-1 w-px shrink-0 bg-border" aria-hidden="true" />}
+          {multipleAccounts && (
+            <>
+              <Chip active={accountId === "all"} onClick={() => setAccountId("all")}>
+                All accounts
+              </Chip>
+              {accounts!.map((a) => (
+                <Chip key={a.id} active={accountId === a.id} onClick={() => setAccountId(a.id)}>
+                  {a.currency}
+                </Chip>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+
+      {totals.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {totals.map(([currency, t]) => (
+            <Card key={currency} className="px-4 py-3">
+              <div className="text-xs font-medium text-ink-muted uppercase">{currency}</div>
+              <div className="tabular-nums mt-1 flex items-baseline gap-4 text-sm">
+                <span className="font-semibold text-good">+{formatMoney(t.in, currency)}</span>
+                <span className="font-semibold text-ink-primary">−{formatMoney(t.out, currency)}</span>
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
+
+      <Card className="overflow-hidden">
+        {loading ? (
+          <ListSkeleton rows={6} />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={activity && activity.length > 0 ? "search" : "activity"}
+            title={activity && activity.length > 0 ? "Nothing matches" : "No activity yet"}
+            description={
+              activity && activity.length > 0
+                ? "Try a different filter or search term."
+                : "Your transfers and top-ups will appear here."
+            }
+          />
+        ) : (
+          <ActivityList
+            lines={filtered.map((item) => ({
+              ...item,
+              currency: item.account.currency,
+              accountLabel: multipleAccounts ? item.account.currency : undefined,
+            }))}
+          />
+        )}
+      </Card>
     </div>
   );
 }

@@ -1,5 +1,3 @@
-import type { LoginResponse } from "./api";
-
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
@@ -20,11 +18,27 @@ export function isLoggedInSnapshot(): boolean {
   return Boolean(localStorage.getItem("access_token"));
 }
 
-export function saveSession(session: LoginResponse) {
+export function getAccessToken(): string | null {
+  return typeof window === "undefined" ? null : localStorage.getItem("access_token");
+}
+
+export function getRefreshToken(): string | null {
+  return typeof window === "undefined" ? null : localStorage.getItem("refresh_token");
+}
+
+export function saveSession(session: {
+  access_token: string;
+  refresh_token: string;
+  user: { username: string };
+}) {
   localStorage.setItem("access_token", session.access_token);
   localStorage.setItem("refresh_token", session.refresh_token);
   localStorage.setItem("username", session.user.username);
   notify();
+}
+
+export function saveAccessToken(accessToken: string) {
+  localStorage.setItem("access_token", accessToken);
 }
 
 export function clearSession() {

@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,16 +17,19 @@ type Account struct {
 	Balance   int64     `json:"balance"`
 	Currency  string    `json:"currency"`
 	CreatedAt time.Time `json:"created_at"`
+	Status    string    `json:"status"`
+	Kind      string    `json:"kind"`
 }
 
 type Entry struct {
 	ID        int64 `json:"id"`
 	AccountID int64 `json:"account_id"`
 	// can be negative or positive
-	Amount    int64     `json:"amount"`
-	CreatedAt time.Time `json:"created_at"`
-	PrevHash  string    `json:"prev_hash"`
-	Hash      string    `json:"hash"`
+	Amount        int64         `json:"amount"`
+	CreatedAt     time.Time     `json:"created_at"`
+	PrevHash      string        `json:"prev_hash"`
+	Hash          string        `json:"hash"`
+	TransactionID sql.NullInt64 `json:"transaction_id"`
 }
 
 type Session struct {
@@ -39,13 +43,25 @@ type Session struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
+type Transaction struct {
+	ID       int64  `json:"id"`
+	Kind     string `json:"kind"`
+	Status   string `json:"status"`
+	Currency string `json:"currency"`
+	// minor units (e.g. cents), always positive
+	Amount      int64     `json:"amount"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type Transfer struct {
 	ID            int64 `json:"id"`
 	FromAccountID int64 `json:"from_account_id"`
 	ToAccountID   int64 `json:"to_account_id"`
 	// must be positive
-	Amount    int64     `json:"amount"`
-	CreatedAt time.Time `json:"created_at"`
+	Amount        int64         `json:"amount"`
+	CreatedAt     time.Time     `json:"created_at"`
+	TransactionID sql.NullInt64 `json:"transaction_id"`
 }
 
 type User struct {

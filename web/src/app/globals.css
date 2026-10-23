@@ -1,56 +1,163 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --page: #f9f9f7;
-  --surface: #fcfcfb;
-  --ink-primary: #0b0b0b;
-  --ink-secondary: #52514e;
-  --ink-muted: #898781;
-  --hairline: #e1e0d9;
-  --border: rgba(11, 11, 11, 0.1);
-  --brand: #2a78d6;
+  color-scheme: light;
+  --page: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f0f2f5;
+  --surface-3: #e7eaef;
+  --ink-primary: #0b1220;
+  --ink-secondary: #4a5468;
+  --ink-muted: #8a93a5;
+  --hairline: #e5e8ee;
+  --border: #d5dae3;
+  --brand: #2f6bff;
+  --brand-strong: #1f4fd6;
   --brand-ink: #ffffff;
-  --status-good: #006300;
-  --status-critical: #d03b3b;
+  --brand-soft: rgba(47, 107, 255, 0.1);
+  --good: #0b7a4b;
+  --good-soft: rgba(11, 122, 75, 0.1);
+  --warn: #b25e09;
+  --warn-soft: rgba(178, 94, 9, 0.12);
+  --critical: #d4322c;
+  --critical-soft: rgba(212, 50, 44, 0.1);
+  --ring: rgba(47, 107, 255, 0.35);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -6px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 24px 48px -12px rgba(16, 24, 40, 0.18);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #08090c;
+  --surface: #111318;
+  --surface-2: #181b22;
+  --surface-3: #21252e;
+  --ink-primary: #f3f5f8;
+  --ink-secondary: #a8b0bf;
+  --ink-muted: #6c7486;
+  --hairline: #20242d;
+  --border: #2c313c;
+  --brand: #5b8cff;
+  --brand-strong: #7aa2ff;
+  --brand-ink: #ffffff;
+  --brand-soft: rgba(91, 140, 255, 0.14);
+  --good: #3ccf8e;
+  --good-soft: rgba(60, 207, 142, 0.12);
+  --warn: #f2a93b;
+  --warn-soft: rgba(242, 169, 59, 0.14);
+  --critical: #ff6b63;
+  --critical-soft: rgba(255, 107, 99, 0.13);
+  --ring: rgba(91, 140, 255, 0.45);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
 }
 
 @theme inline {
   --color-page: var(--page);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-ink-primary: var(--ink-primary);
   --color-ink-secondary: var(--ink-secondary);
   --color-ink-muted: var(--ink-muted);
   --color-hairline: var(--hairline);
   --color-border: var(--border);
   --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
   --color-brand-ink: var(--brand-ink);
-  --color-status-good: var(--status-good);
-  --color-status-critical: var(--status-critical);
+  --color-brand-soft: var(--brand-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+  --color-ring: var(--ring);
+  --shadow-card: var(--shadow-md);
+  --shadow-soft: var(--shadow-sm);
+  --shadow-pop: var(--shadow-lg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --animate-fade-in: fade-in 0.24s ease-out both;
+  --animate-rise: rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes shimmer {
+    from { background-position: -400px 0; }
+    to { background-position: 400px 0; }
+  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --page: #0d0d0d;
-    --surface: #1a1a19;
-    --ink-primary: #ffffff;
-    --ink-secondary: #c3c2b7;
-    --ink-muted: #898781;
-    --hairline: #2c2c2a;
-    --border: rgba(255, 255, 255, 0.1);
-    --brand: #3987e5;
-    --status-good: #0ca30c;
-    --status-critical: #e66767;
-  }
+html {
+  background: var(--page);
 }
 
 body {
   background: var(--page);
   color: var(--ink-primary);
   font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-feature-settings: "cv11", "ss01";
 }
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
+  background-size: 800px 100%;
+  animation: var(--animate-shimmer);
+}
+
+.check-draw {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: check-draw 0.45s 0.2s ease-out forwards;
+}
+
+@keyframes check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+dialog::backdrop {
+  background: rgba(8, 10, 14, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+dialog[open] {
+  animation: var(--animate-rise);
+}
+
+/* Layered so utilities like outline-none on ring-styled controls still win. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

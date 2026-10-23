@@ -2,11 +2,13 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	db "github.com/zakhaev43/Swift-Transfer/db/sqlc"
 	"github.com/zakhaev43/Swift-Transfer/token"
 	"github.com/zakhaev43/Swift-Transfer/util"
@@ -52,8 +54,8 @@ func (server *Server) createUser(ctx *gin.Context) {
 	hashedPassword, err := util.HashPassword(req.Password)
 
 	if err != nil {
-
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	arg := db.CreateUserParams{
@@ -66,8 +68,12 @@ func (server *Server) createUser(ctx *gin.Context) {
 	user, err := server.store.CreateUser(ctx, arg)
 
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code.Name() == "unique_violation" {
+			ctx.JSON(http.StatusConflict, errorResponse(errors.New("that username or email is already registered")))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-
 		return
 	}
 
