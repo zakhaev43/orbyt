@@ -199,7 +199,7 @@ function TransferView() {
   else if (payeeQuery.error && debouncedRecipient === recipientId) {
     recipientProblem =
       payeeQuery.error instanceof ApiError && payeeQuery.error.status === 404
-        ? "No Swift account with that number."
+        ? "No Orbyt account with that number."
         : errorMessage(payeeQuery.error, "Couldn't check that account.");
   } else if (payee && !payee.can_receive) recipientProblem = "This account can't receive money right now.";
   else if (payee && from && payee.currency !== from.currency)
@@ -256,7 +256,7 @@ function TransferView() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Send money" description="Instant transfers to any Swift account in the same currency." />
+      <PageHeader title="Send money" description="Instant transfers to any Orbyt account in the same currency." />
 
       <div className="mx-auto max-w-xl space-y-6">
         <Stepper step={step} />
@@ -317,7 +317,7 @@ function TransferView() {
                   ) : payee ? (
                     <PayeeCard payee={payee} note={ownAccount ? "Your account" : undefined} />
                   ) : (
-                    !recipientInput && <FieldHint>They can find it on their account page in Swift.</FieldHint>
+                    !recipientInput && <FieldHint>They can find it on their account page in Orbyt.</FieldHint>
                   )}
                 </div>
               </div>

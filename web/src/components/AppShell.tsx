@@ -29,7 +29,7 @@ function Sidebar({ pathname, username, onLogout }: { pathname: string; username:
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-hairline bg-surface lg:flex">
       <Link href="/dashboard" className="flex items-center gap-2.5 px-6 pt-6 pb-8">
         <Logo />
-        <span className="text-lg font-semibold tracking-tight">Swift</span>
+        <span className="text-lg font-semibold tracking-tight">Orbyt</span>
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1 px-3" aria-label="Main">
@@ -88,7 +88,7 @@ function MobileTopBar({ username, onLogout }: { username: string | null; onLogou
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-hairline bg-surface/85 px-4 py-3 backdrop-blur-lg lg:hidden">
       <Link href="/dashboard" className="flex items-center gap-2">
         <Logo />
-        <span className="font-semibold tracking-tight">Swift</span>
+        <span className="font-semibold tracking-tight">Orbyt</span>
       </Link>
       <div className="flex items-center gap-1">
         {username && (

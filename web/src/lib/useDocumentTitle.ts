@@ -4,6 +4,6 @@ import { useEffect } from "react";
 
 export function useDocumentTitle(title: string) {
   useEffect(() => {
-    document.title = `${title} · Swift`;
+    document.title = `${title} · Orbyt`;
   }, [title]);
 }

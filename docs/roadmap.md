@@ -1,6 +1,6 @@
 # Roadmap
 
-Open items for Swift-Transfer, ordered by what to do next. Each item notes
+Open items for Orbyt, ordered by what to do next. Each item notes
 why it matters and roughly how big it is. Re-order freely — this is a
 working list, not a commitment.
 

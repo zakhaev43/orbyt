@@ -9,9 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	db "github.com/zakhaev43/Swift-Transfer/db/sqlc"
-	"github.com/zakhaev43/Swift-Transfer/token"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	db "github.com/zakhaev43/orbyt/db/sqlc"
+	"github.com/zakhaev43/orbyt/token"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 type createUserRequest struct {

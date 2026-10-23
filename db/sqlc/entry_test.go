@@ -9,7 +9,7 @@ import (
 
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 func requirePQCode(t *testing.T, err error, codeName string) {

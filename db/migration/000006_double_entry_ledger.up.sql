@@ -96,7 +96,7 @@ CREATE TRIGGER "entries_append_only"
 -- Internal owner for system accounts. The password hash is not a valid bcrypt
 -- hash and the username fails the API's alphanum check, so it cannot log in.
 INSERT INTO "users" ("username", "hashed_password", "full_name", "email")
-VALUES ('_system', '!', 'Swift Treasury', 'treasury@swift.invalid');
+VALUES ('_system', '!', 'Orbyt Treasury', 'treasury@orbyt.invalid');
 
 INSERT INTO "accounts" ("owner", "balance", "currency", "kind")
 VALUES ('_system', 0, 'USD', 'system'),

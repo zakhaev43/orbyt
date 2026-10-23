@@ -1,4 +1,4 @@
-module github.com/zakhaev43/Swift-Transfer
+module github.com/zakhaev43/orbyt
 
 go 1.26.5
 

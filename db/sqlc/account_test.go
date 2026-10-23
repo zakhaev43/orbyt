@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 func createRandomAccount(t *testing.T) Account {

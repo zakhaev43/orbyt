@@ -131,7 +131,7 @@ function ProfileView() {
 
         <Card className="p-6">
           <h2 className="text-[15px] font-semibold">Appearance</h2>
-          <p className="mt-0.5 text-[13px] text-ink-muted">Choose how Swift looks on this device.</p>
+          <p className="mt-0.5 text-[13px] text-ink-muted">Choose how Orbyt looks on this device.</p>
           <div className="mt-4">
             <ThemeSwitcher />
           </div>

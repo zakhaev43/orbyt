@@ -1,7 +1,7 @@
 # How a Transaction Happens
 
 This document describes what actually happens, end to end, when money moves
-between two accounts in Swift-Transfer, and how the ledger protects itself
+between two accounts in Orbyt, and how the ledger protects itself
 against tampering after the fact.
 
 ## 1. Data model

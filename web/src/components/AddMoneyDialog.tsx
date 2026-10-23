@@ -57,7 +57,7 @@ export function AddMoneyDialog({
       open={open}
       onClose={close}
       title={`Add money to ${account.currency}`}
-      description="Sandbox top-up. Funds come from the Swift treasury account and are recorded in the ledger like any other transaction."
+      description="Sandbox top-up. Funds come from the Orbyt treasury account and are recorded in the ledger like any other transaction."
     >
       <form onSubmit={submit} className="space-y-4">
         <AmountInput value={amount} onChange={setAmount} currency={account.currency} autoFocus />

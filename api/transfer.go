@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	db "github.com/zakhaev43/Swift-Transfer/db/sqlc"
+	db "github.com/zakhaev43/orbyt/db/sqlc"
 )
 
 // Amount is in minor units (e.g. cents).

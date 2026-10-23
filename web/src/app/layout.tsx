@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Swift",
+  title: "Orbyt",
   description: "Multi-currency accounts and instant transfers on a double-entry ledger.",
 };
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
-	"github.com/zakhaev43/Swift-Transfer/token"
+	"github.com/zakhaev43/orbyt/token"
 )
 
 func addAuthorization(

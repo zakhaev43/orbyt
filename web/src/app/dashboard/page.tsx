@@ -97,7 +97,7 @@ function DashboardView() {
             <EmptyState
               icon="wallet"
               title="Open your first account"
-              description="Hold balances in USD, EUR, GBP or CAD and send money instantly to anyone on Swift."
+              description="Hold balances in USD, EUR, GBP or CAD and send money instantly to anyone on Orbyt."
               action={
                 <button
                   onClick={() => setOpenAccount(true)}

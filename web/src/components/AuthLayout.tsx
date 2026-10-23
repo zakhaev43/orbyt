@@ -45,7 +45,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
 
         <div className="flex items-center gap-2.5">
           <Logo />
-          <span className="text-lg font-semibold tracking-tight">Swift</span>
+          <span className="text-lg font-semibold tracking-tight">Orbyt</span>
         </div>
 
         <div className="my-auto max-w-md">
@@ -78,7 +78,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         <div className="flex items-center justify-between p-4 sm:p-6">
           <div className="flex items-center gap-2 lg:invisible">
             <Logo />
-            <span className="font-semibold tracking-tight">Swift</span>
+            <span className="font-semibold tracking-tight">Orbyt</span>
           </div>
           <ThemeSwitcher compact />
         </div>

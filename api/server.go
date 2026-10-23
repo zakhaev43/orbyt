@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
-	db "github.com/zakhaev43/Swift-Transfer/db/sqlc"
-	"github.com/zakhaev43/Swift-Transfer/token"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	db "github.com/zakhaev43/orbyt/db/sqlc"
+	"github.com/zakhaev43/orbyt/token"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 type Server struct {

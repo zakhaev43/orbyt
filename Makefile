@@ -5,22 +5,22 @@ mysql:
 	docker run --name mysql8 -p 3306:3306  -e MYSQL_ROOT_PASSWORD=secret -d mysql:8
 
 createdb:
-	docker exec -it postgres createdb --username=root --owner=root swift_transfer
+	docker exec -it postgres createdb --username=root --owner=root orbyt
 
 dropdb:
-	docker exec -it postgres dropdb swift_transfer
+	docker exec -it postgres dropdb orbyt
 
 migrateup:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/swift_transfer?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/orbyt?sslmode=disable" -verbose up
 
 migrateup1:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/swift_transfer?sslmode=disable" -verbose up 1
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/orbyt?sslmode=disable" -verbose up 1
 
 migratedown:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/swift_transfer?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/orbyt?sslmode=disable" -verbose down
 
 migratedown1:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/swift_transfer?sslmode=disable" -verbose down 1
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/orbyt?sslmode=disable" -verbose down 1
 
 sqlc:
 	sqlc generate

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 func createRandomTransfer(t *testing.T, from, to Account) Transfer {

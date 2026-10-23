@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	mockdb "github.com/zakhaev43/Swift-Transfer/db/mock"
-	db "github.com/zakhaev43/Swift-Transfer/db/sqlc"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	mockdb "github.com/zakhaev43/orbyt/db/mock"
+	db "github.com/zakhaev43/orbyt/db/sqlc"
+	"github.com/zakhaev43/orbyt/util"
 	"go.uber.org/mock/gomock"
 )
 

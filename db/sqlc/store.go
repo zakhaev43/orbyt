@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 const (

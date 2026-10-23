@@ -10,9 +10,9 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/zakhaev43/Swift-Transfer/api"
-	db "github.com/zakhaev43/Swift-Transfer/db/sqlc"
-	"github.com/zakhaev43/Swift-Transfer/util"
+	"github.com/zakhaev43/orbyt/api"
+	db "github.com/zakhaev43/orbyt/db/sqlc"
+	"github.com/zakhaev43/orbyt/util"
 )
 
 func main() {

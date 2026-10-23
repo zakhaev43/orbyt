@@ -71,7 +71,7 @@ export default function LoginPage() {
         </Button>
 
         <p className="pt-2 text-center text-sm text-ink-secondary">
-          New to Swift?{" "}
+          New to Orbyt?{" "}
           <Link href="/register" className="font-medium text-brand hover:underline">
             Create an account
           </Link>
