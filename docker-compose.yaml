@@ -9,6 +9,11 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=secret
       - POSTGRES_DB=orbyt
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U root -d orbyt" ]
+      interval: 2s
+      timeout: 3s
+      retries: 15
   api:
     build:
       context: .
@@ -19,9 +24,8 @@ services:
       - DB_SOURCE=postgresql://root:secret@postgres:5432/orbyt?sslmode=disable
       - ALLOWED_ORIGIN=http://localhost:3000
     depends_on:
-      - postgres
-    entrypoint: [ "/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh" ]
-    command: [ "/app/main" ]
+      postgres:
+        condition: service_healthy
   web:
     build:
       context: ./web
