@@ -82,6 +82,7 @@ export type User = {
   username: string;
   full_name: string;
   email: string;
+  role: "customer" | "admin";
   created_at: string;
 };
 
@@ -228,6 +229,96 @@ export function createTransfer(input: {
 
 export function verifyLedger() {
   return request<LedgerVerification>("/ledger/verify");
+}
+
+export type FlowStats = {
+  count: number;
+  volume: number;
+  count_30d: number;
+  volume_30d: number;
+  average_size: number;
+};
+
+export type CurrencyStats = {
+  currency: string;
+  accounts: number;
+  active: number;
+  frozen: number;
+  closed: number;
+  balances_held: number;
+  transfers: FlowStats;
+  deposits: FlowStats;
+};
+
+export type AdminStats = {
+  generated_at: string;
+  users: { total: number; new_since: number };
+  currencies: CurrencyStats[];
+  top_senders: { owner: string; full_name: string; currency: string; transfers: number; volume: number }[];
+  ledger: LedgerVerification;
+};
+
+export type ActivityPoint = {
+  day: string;
+  currency: string;
+  kind: "transfer" | "deposit";
+  count: number;
+  volume: number;
+};
+
+export type AdminActivity = { since: string; days: number; points: ActivityPoint[] };
+
+export type AdminTransaction = {
+  id: number;
+  kind: "transfer" | "deposit";
+  status: string;
+  currency: string;
+  amount: number;
+  description: string;
+  created_at: string;
+  from_account_id: number;
+  from_owner: string;
+  from_kind: "customer" | "system";
+  to_account_id: number;
+  to_owner: string;
+};
+
+export type AdminUser = {
+  username: string;
+  full_name: string;
+  email: string;
+  role: string;
+  created_at: string;
+  accounts: number;
+  frozen_accounts: number;
+};
+
+function query(params: Record<string, string | number | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") search.set(key, String(value));
+  }
+  return search.toString();
+}
+
+export function getAdminStats() {
+  return request<AdminStats>("/admin/stats");
+}
+
+export function getAdminActivity(days: number) {
+  return request<AdminActivity>(`/admin/activity?${query({ days })}`);
+}
+
+export function listAdminTransactions(params: { page: number; pageSize: number; kind?: string; currency?: string }) {
+  return request<AdminTransaction[]>(
+    `/admin/transactions?${query({ page_id: params.page, page_size: params.pageSize, kind: params.kind, currency: params.currency })}`,
+  );
+}
+
+export function listAdminUsers(params: { page: number; pageSize: number; search?: string }) {
+  return request<AdminUser[]>(
+    `/admin/users?${query({ page_id: params.page, page_size: params.pageSize, search: params.search })}`,
+  );
 }
 
 export function errorMessage(err: unknown, fallback: string): string {

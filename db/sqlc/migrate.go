@@ -1,0 +1,57 @@
+package db
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"log"
+	"time"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+)
+
+// RunMigrations applies every pending migration.
+func RunMigrations(migrationURL, dbSource string) error {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		return err
+	}
+	if err := migration.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
+	return nil
+}
+
+// WaitForDB retries until the database accepts connections, so callers can
+// start before Postgres has finished booting.
+func WaitForDB(conn *sql.DB, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for {
+		err := pingWithTimeout(conn, 2*time.Second)
+		if err == nil {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return err
+		}
+		log.Println("waiting for database:", err)
+		time.Sleep(time.Second)
+	}
+}
+
+// lib/pq ignores the context while resolving the host, so an unresolvable
+// hostname would block PingContext indefinitely; bound it ourselves.
+func pingWithTimeout(conn *sql.DB, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	result := make(chan error, 1)
+	go func() { result <- conn.PingContext(ctx) }()
+	select {
+	case err := <-result:
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}

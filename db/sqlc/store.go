@@ -169,7 +169,7 @@ type posting struct {
 // postEntries appends one hash-chained ledger entry per posting and applies
 // each amount to the account's cached balance. Postings must sum to zero; the
 // entries_balanced trigger rejects the commit otherwise.
-func postEntries(ctx context.Context, q *Queries, transactionID int64, postings []posting) ([]Entry, map[int64]Account, error) {
+func postEntries(ctx context.Context, q *Queries, transactionID int64, at sql.NullTime, postings []posting) ([]Entry, map[int64]Account, error) {
 	prevHash, err := q.GetLastEntryHash(ctx)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, nil, err
@@ -181,6 +181,7 @@ func postEntries(ctx context.Context, q *Queries, transactionID int64, postings 
 			AccountID:     p.accountID,
 			Amount:        p.amount,
 			TransactionID: sql.NullInt64{Int64: transactionID, Valid: true},
+			CreatedAt:     at,
 		})
 		if err != nil {
 			return nil, nil, err
@@ -214,6 +215,14 @@ type TransferTxParams struct {
 	Amount        int64  `json:"amount"`
 	Currency      string `json:"currency"`
 	Description   string `json:"description"`
+	// At backdates the transaction (used only for seeding demo data); the
+	// zero value means "now", taken from the database clock.
+	At time.Time `json:"-"`
+}
+
+// optionalTime maps the zero time to NULL so the database default applies.
+func optionalTime(t time.Time) sql.NullTime {
+	return sql.NullTime{Time: t, Valid: !t.IsZero()}
 }
 
 // TransferTxResult is the result of the transfer transaction
@@ -261,11 +270,13 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 			return ErrInsufficientFunds
 		}
 
+		at := optionalTime(arg.At)
 		result.Transaction, err = q.CreateTransaction(ctx, CreateTransactionParams{
 			Kind:        TransactionKindTransfer,
 			Currency:    arg.Currency,
 			Amount:      arg.Amount,
 			Description: arg.Description,
+			CreatedAt:   at,
 		})
 		if err != nil {
 			return err
@@ -276,12 +287,13 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 			ToAccountID:   to.ID,
 			Amount:        arg.Amount,
 			TransactionID: sql.NullInt64{Int64: result.Transaction.ID, Valid: true},
+			CreatedAt:     at,
 		})
 		if err != nil {
 			return err
 		}
 
-		entries, accounts, err := postEntries(ctx, q, result.Transaction.ID, []posting{
+		entries, accounts, err := postEntries(ctx, q, result.Transaction.ID, at, []posting{
 			{accountID: from.ID, amount: -arg.Amount},
 			{accountID: to.ID, amount: arg.Amount},
 		})
@@ -302,6 +314,8 @@ type DepositTxParams struct {
 	AccountID   int64  `json:"account_id"`
 	Amount      int64  `json:"amount"`
 	Description string `json:"description"`
+	// At backdates the deposit; see TransferTxParams.At.
+	At time.Time `json:"-"`
 }
 
 // DepositTxResult is the result of the deposit transaction
@@ -345,17 +359,19 @@ func (store *SQLStore) DepositTx(ctx context.Context, arg DepositTxParams) (Depo
 			return err
 		}
 
+		at := optionalTime(arg.At)
 		result.Transaction, err = q.CreateTransaction(ctx, CreateTransactionParams{
 			Kind:        TransactionKindDeposit,
 			Currency:    account.Currency,
 			Amount:      arg.Amount,
 			Description: arg.Description,
+			CreatedAt:   at,
 		})
 		if err != nil {
 			return err
 		}
 
-		entries, accounts, err := postEntries(ctx, q, result.Transaction.ID, []posting{
+		entries, accounts, err := postEntries(ctx, q, result.Transaction.ID, at, []posting{
 			{accountID: treasury.ID, amount: -arg.Amount},
 			{accountID: account.ID, amount: arg.Amount},
 		})

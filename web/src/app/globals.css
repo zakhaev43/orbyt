@@ -24,6 +24,11 @@
   --critical: #d4322c;
   --critical-soft: rgba(212, 50, 44, 0.1);
   --ring: rgba(47, 107, 255, 0.35);
+  /* Chart series: validated categorical slots 1–2 against --surface. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --chart-grid: #eceef2;
+  --chart-axis: #c9ced8;
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
   --shadow-md: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -6px rgba(16, 24, 40, 0.08);
   --shadow-lg: 0 24px 48px -12px rgba(16, 24, 40, 0.18);
@@ -51,6 +56,10 @@
   --critical: #ff6b63;
   --critical-soft: rgba(255, 107, 99, 0.13);
   --ring: rgba(91, 140, 255, 0.45);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --chart-grid: #1f232b;
+  --chart-axis: #343a46;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -6px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
@@ -77,6 +86,8 @@
   --color-critical: var(--critical);
   --color-critical-soft: var(--critical-soft);
   --color-ring: var(--ring);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
   --shadow-card: var(--shadow-md);
   --shadow-soft: var(--shadow-sm);
   --shadow-pop: var(--shadow-lg);

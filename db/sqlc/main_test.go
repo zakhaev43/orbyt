@@ -2,14 +2,10 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"log"
 	"os"
 	"testing"
 
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 	"github.com/zakhaev43/orbyt/util"
 )
@@ -26,11 +22,7 @@ func TestMain(m *testing.M) {
 		log.Fatal("cannot load config file:", err)
 	}
 
-	migration, err := migrate.New("file://../migration", config.DBSource)
-	if err != nil {
-		log.Fatal("cannot create migration:", err)
-	}
-	if err := migration.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+	if err := RunMigrations("file://../migration", config.DBSource); err != nil {
 		log.Fatal("cannot migrate test db:", err)
 	}
 

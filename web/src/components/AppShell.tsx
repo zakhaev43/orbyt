@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ReactNode, useSyncExternalStore } from "react";
+import useSWR from "swr";
 import { usePathname, useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -10,6 +11,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Icon, IconName } from "@/components/ui/Icon";
 import { Logo } from "@/components/ui/Logo";
 import { ToastProvider } from "@/components/ui/Toast";
+import { getCurrentUser } from "@/lib/api";
 import { clearSession, subscribeAuth, usernameSnapshot } from "@/lib/auth";
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
@@ -20,11 +22,20 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/profile", label: "Profile", icon: "user" },
 ];
 
+const ADMIN_NAV = { href: "/admin", label: "Admin", icon: "shield" as IconName };
+
+// Only admins see the Admin entry; the API enforces access regardless.
+function useNav() {
+  const { data: me } = useSWR("me", getCurrentUser);
+  return me?.role === "admin" ? [...NAV, ADMIN_NAV] : NAV;
+}
+
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function Sidebar({ pathname, username, onLogout }: { pathname: string; username: string | null; onLogout: () => void }) {
+  const nav = useNav();
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-hairline bg-surface lg:flex">
       <Link href="/dashboard" className="flex items-center gap-2.5 px-6 pt-6 pb-8">
@@ -33,7 +44,7 @@ function Sidebar({ pathname, username, onLogout }: { pathname: string; username:
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1 px-3" aria-label="Main">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const active = isActive(pathname, item.href);
           return (
             <Link
@@ -109,12 +120,14 @@ function MobileTopBar({ username, onLogout }: { username: string | null; onLogou
 }
 
 function MobileTabBar({ pathname }: { pathname: string }) {
+  const nav = useNav();
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-hairline bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 grid border-t border-hairline bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden"
+      style={{ gridTemplateColumns: `repeat(${nav.length}, minmax(0, 1fr))` }}
     >
-      {NAV.map((item) => {
+      {nav.map((item) => {
         const active = isActive(pathname, item.href);
         return (
           <Link

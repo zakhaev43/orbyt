@@ -1,39 +1,97 @@
-name: Deploy to Production
+name: Build and push images
 
 on:
   push:
     branches: [ "main", "cd_test" ]
+  workflow_dispatch:
+
+# Never run two releases at once; a newer push waits for the current one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 permissions:
   id-token: write
   contents: read
+
+env:
+  AWS_REGION: eu-central-1
+  AWS_ROLE: arn:aws:iam::014498645169:role/cd_github
+  # Existing AWS resource names, kept from before the Orbyt rename. Rename
+  # them in AWS first, then here.
+  AWS_SECRET_ID: swift_secret
+  API_REPOSITORY: swift_transfer
+
 jobs:
+  checks:
+    name: CI checks
+    uses: ./.github/workflows/testing.yml
 
-  build:
+  api:
+    name: API image
+    needs: checks
     runs-on: ubuntu-latest
-   
+
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: arn:aws:iam::014498645169:role/cd_github
-        aws-region: eu-central-1
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Login to Amazon ECR Private
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
 
-    - name: Load secrets and save to app.env
-      run: aws secretsmanager get-secret-value --secret-id swift_secret --query SecretString --output text | jq -r  'to_entries|map("\(.key)=\(.value)") |.[]' > app.env
+      - name: Login to Amazon ECR Private
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      
-    - name: Build, tag, and push docker image to Amazon ECR
-      env:
-        REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        REPOSITORY: swift_transfer
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-        docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-    
+      # TODO(security): this bakes production secrets into an image layer, so
+      # anyone who can pull from ECR can read them. Inject them at runtime
+      # (e.g. ECS task definition secrets) instead.
+      - name: Load secrets and save to app.env
+        run: |
+          aws secretsmanager get-secret-value --secret-id "$AWS_SECRET_ID" \
+            --query SecretString --output text \
+            | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]' > app.env
+
+      - name: Build, tag, and push API image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$REGISTRY/$API_REPOSITORY:$IMAGE_TAG" -t "$REGISTRY/$API_REPOSITORY:latest" .
+          docker push --all-tags "$REGISTRY/$API_REPOSITORY"
+
+  web:
+    name: Web image
+    needs: checks
+    runs-on: ubuntu-latest
+    # Opt-in: set the WEB_ECR_REPOSITORY and PUBLIC_API_URL repository
+    # variables once the ECR repository for the frontend exists.
+    if: vars.WEB_ECR_REPOSITORY != '' && vars.PUBLIC_API_URL != ''
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR Private
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push web image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.WEB_ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+        run: |
+          docker build --build-arg NEXT_PUBLIC_API_URL="$PUBLIC_API_URL" \
+            -t "$REGISTRY/$REPOSITORY:$IMAGE_TAG" -t "$REGISTRY/$REPOSITORY:latest" web
+          docker push --all-tags "$REGISTRY/$REPOSITORY"

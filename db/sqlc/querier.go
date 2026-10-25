@@ -6,15 +6,25 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 type Querier interface {
 	AddAccountBalance(ctx context.Context, arg AddAccountBalanceParams) (Account, error)
+	AdminAccountSummary(ctx context.Context) ([]AdminAccountSummaryRow, error)
+	AdminCountUsers(ctx context.Context, since time.Time) (AdminCountUsersRow, error)
+	AdminDailyActivity(ctx context.Context, since time.Time) ([]AdminDailyActivityRow, error)
+	// Every transaction kind has exactly one debit and one credit entry.
+	AdminListTransactions(ctx context.Context, arg AdminListTransactionsParams) ([]AdminListTransactionsRow, error)
+	AdminListUsers(ctx context.Context, arg AdminListUsersParams) ([]AdminListUsersRow, error)
+	AdminTopSenders(ctx context.Context, arg AdminTopSendersParams) ([]AdminTopSendersRow, error)
+	AdminTransactionSummary(ctx context.Context, since time.Time) ([]AdminTransactionSummaryRow, error)
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
 	CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
+	// created_at defaults to now(); only the provisioning tool backdates it.
 	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -38,6 +48,7 @@ type Querier interface {
 	// Should always be empty: the entries_balanced trigger rejects these at commit.
 	ListUnbalancedTransactions(ctx context.Context) ([]ListUnbalancedTransactionsRow, error)
 	SetEntryHash(ctx context.Context, arg SetEntryHashParams) (Entry, error)
+	SetUserRole(ctx context.Context, arg SetUserRoleParams) (User, error)
 	// Conditional so it can't race a concurrent transfer: the row lock taken by
 	// UPDATE makes Postgres re-check status/balance against the latest version.
 	UpdateAccountStatus(ctx context.Context, arg UpdateAccountStatusParams) (Account, error)

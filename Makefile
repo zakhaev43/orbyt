@@ -60,6 +60,21 @@ migratedown1:
 migratedown: ## Roll back every migration (destroys all data)
 	$(MIGRATE) down -all
 
+## Demo data -----------------------------------------------------------------
+
+USERS     ?= 40
+TRANSFERS ?= 1500
+DAYS      ?= 90
+
+provision: ## Seed demo users, accounts and backdated transactions (USERS=, TRANSFERS=, DAYS=)
+	docker compose up -d --wait postgres
+	$(GO) --network $(NETWORK) -e DB_SOURCE="$(DB_URL)" $(GO_IMAGE) go run ./cmd/provision -users=$(USERS) -transfers=$(TRANSFERS) -days=$(DAYS)
+
+# ADMIN rather than USERNAME: Windows always sets USERNAME in the environment.
+promote: ## Make an existing user an admin (ADMIN=username)
+	$(if $(ADMIN),,$(error usage: make promote ADMIN=username))
+	docker compose exec -T postgres psql -U root orbyt -c "UPDATE users SET role = 'admin' WHERE username = '$(ADMIN)' RETURNING username, role"
+
 ## Backend -------------------------------------------------------------------
 
 test: ## Run Go tests against a separate orbyt_test database
@@ -89,4 +104,4 @@ web-install:
 web-check: web-install ## Type-check and lint the web app
 	$(NODE) $(NODE_IMAGE) sh -c "npx tsc --noEmit && npx eslint src"
 
-.PHONY: up down ps logs psql migrateup migrateup1 migratedown1 migratedown test vet fmt sqlc mock web-install web-check
+.PHONY: up down ps logs psql migrateup migrateup1 migratedown1 migratedown provision promote test vet fmt sqlc mock web-install web-check

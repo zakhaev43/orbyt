@@ -1,45 +1,88 @@
-name: Orbyt_CI
+name: Orbyt CI
 
 on:
   push:
-    branches: [ "main","ci_test"]
+    branches: [ "main", "ci_test" ]
   pull_request:
     branches: [ "main" ]
+  # Lets deploy.yml run the same checks before it ships anything.
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
 
 jobs:
-
-  test:
+  backend:
+    name: Backend (Go)
     runs-on: ubuntu-latest
 
     services:
-      # Label used to access the service container
       postgres:
-        # Docker Hub image
         image: postgres:12-alpine
-        # Provide the password for postgres
         env:
           POSTGRES_USER: root
           POSTGRES_PASSWORD: secret
           POSTGRES_DB: orbyt
-        # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
         ports:
-          # Maps tcp port 5432 on service container to the host
           - 5432:5432
+
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.26.5'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
-    # The db tests apply migrations themselves in TestMain.
-    - name: Test
-      env:
-        DB_SOURCE: postgresql://root:secret@localhost:5432/orbyt?sslmode=disable
-      run: go test -count=1 -cover ./...
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"; echo "$unformatted"; exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      # The db tests apply migrations themselves in TestMain.
+      - name: Test
+        env:
+          DB_SOURCE: postgresql://root:secret@localhost:5432/orbyt?sslmode=disable
+        run: go test -count=1 -race -cover ./...
+
+  frontend:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+      - name: Type-check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npx eslint src
+      - name: Build
+        run: npm run build

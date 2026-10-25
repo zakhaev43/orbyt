@@ -15,9 +15,11 @@ const createEntry = `-- name: CreateEntry :one
 INSERT INTO entries (
   account_id,
   amount,
-  transaction_id
+  transaction_id,
+  created_at
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3,
+  COALESCE($4::timestamptz, now())
 ) RETURNING id, account_id, amount, created_at, prev_hash, hash, transaction_id
 `
 
@@ -25,10 +27,16 @@ type CreateEntryParams struct {
 	AccountID     int64         `json:"account_id"`
 	Amount        int64         `json:"amount"`
 	TransactionID sql.NullInt64 `json:"transaction_id"`
+	CreatedAt     sql.NullTime  `json:"created_at"`
 }
 
 func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
-	row := q.db.QueryRowContext(ctx, createEntry, arg.AccountID, arg.Amount, arg.TransactionID)
+	row := q.db.QueryRowContext(ctx, createEntry,
+		arg.AccountID,
+		arg.Amount,
+		arg.TransactionID,
+		arg.CreatedAt,
+	)
 	var i Entry
 	err := row.Scan(
 		&i.ID,

@@ -15,9 +15,11 @@ INSERT INTO transfers (
   from_account_id,
   to_account_id,
   amount,
-  transaction_id
+  transaction_id,
+  created_at
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4,
+  COALESCE($5::timestamptz, now())
 ) RETURNING id, from_account_id, to_account_id, amount, created_at, transaction_id
 `
 
@@ -26,6 +28,7 @@ type CreateTransferParams struct {
 	ToAccountID   int64         `json:"to_account_id"`
 	Amount        int64         `json:"amount"`
 	TransactionID sql.NullInt64 `json:"transaction_id"`
+	CreatedAt     sql.NullTime  `json:"created_at"`
 }
 
 func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
@@ -34,6 +37,7 @@ func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) 
 		arg.ToAccountID,
 		arg.Amount,
 		arg.TransactionID,
+		arg.CreatedAt,
 	)
 	var i Transfer
 	err := row.Scan(
