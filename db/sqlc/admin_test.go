@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -74,6 +75,53 @@ func TestAdminListTransactions(t *testing.T) {
 	for _, row := range rows {
 		require.Equal(t, TransactionKindTransfer, row.Kind)
 		require.Equal(t, util.EUR, row.Currency)
+	}
+}
+
+func TestAdminListAccounts(t *testing.T) {
+	ctx := context.Background()
+	funded := createFundedAccount(t, util.USD, 7777)
+	empty := createAccountInCurrency(t, util.USD)
+	_, err := testQueries.UpdateAccountStatus(ctx, UpdateAccountStatusParams{
+		ID: empty.ID, Owner: empty.Owner, FromStatus: AccountStatusActive, NewStatus: AccountStatusFrozen,
+	})
+	require.NoError(t, err)
+
+	byOwner, err := testQueries.AdminListAccounts(ctx, AdminListAccountsParams{
+		Owner:     sql.NullString{String: funded.Owner, Valid: true},
+		PageLimit: 10,
+	})
+	require.NoError(t, err)
+	require.Len(t, byOwner, 1)
+	require.Equal(t, funded.ID, byOwner[0].ID)
+	require.Equal(t, int64(7777), byOwner[0].Balance)
+	require.Equal(t, int64(1), byOwner[0].Entries)
+
+	// An account with no entries falls back to its open date.
+	frozen, err := testQueries.AdminListAccounts(ctx, AdminListAccountsParams{
+		Owner:     sql.NullString{String: empty.Owner, Valid: true},
+		Status:    sql.NullString{String: AccountStatusFrozen, Valid: true},
+		PageLimit: 10,
+	})
+	require.NoError(t, err)
+	require.Len(t, frozen, 1)
+	require.Zero(t, frozen[0].Entries)
+	require.True(t, frozen[0].LastActivity.Equal(frozen[0].CreatedAt))
+
+	byNumber, err := testQueries.AdminListAccounts(ctx, AdminListAccountsParams{
+		Search:    sql.NullString{String: fmt.Sprint(funded.ID), Valid: true},
+		PageLimit: 10,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, byNumber)
+
+	byBalance, err := testQueries.AdminListAccounts(ctx, AdminListAccountsParams{Sort: "balance", PageLimit: 20})
+	require.NoError(t, err)
+	for i := 1; i < len(byBalance); i++ {
+		require.GreaterOrEqual(t, byBalance[i-1].Balance, byBalance[i].Balance)
+	}
+	for _, row := range byBalance {
+		require.NotEqual(t, "_system", row.Owner, "system accounts must be excluded")
 	}
 }
 

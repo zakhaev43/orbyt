@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthLayout, PasswordInput } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +8,7 @@ import { Alert } from "@/components/ui/Feedback";
 import { FieldHint, Input, Label } from "@/components/ui/Field";
 import { errorMessage, loginUser, registerUser } from "@/lib/api";
 import { saveSession } from "@/lib/auth";
+import { navigateFresh } from "@/lib/hooks";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 function passwordStrength(password: string): { score: number; label: string } {
@@ -42,7 +42,6 @@ function StrengthMeter({ password }: { password: string }) {
 
 export default function RegisterPage() {
   useDocumentTitle("Create account");
-  const router = useRouter();
   const [form, setForm] = useState({ username: "", full_name: "", email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -63,7 +62,7 @@ export default function RegisterPage() {
       await registerUser(input);
       const session = await loginUser({ username: input.username, password: input.password });
       saveSession(session);
-      router.push("/dashboard");
+      navigateFresh("/dashboard");
     } catch (err) {
       setError(errorMessage(err, "Registration failed. Please try again."));
     } finally {

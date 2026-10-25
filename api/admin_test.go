@@ -108,6 +108,25 @@ func TestAdminStats(t *testing.T) {
 	require.Zero(t, rsp.Currencies[1].Accounts)
 }
 
+func TestAdminAccounts(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	store := mockdb.NewMockStore(ctrl)
+	store.EXPECT().GetUser(gomock.Any(), "root").Return(db.User{Username: "root", Role: RoleAdmin}, nil).Times(2)
+	store.EXPECT().AdminListAccounts(gomock.Any(), db.AdminListAccountsParams{
+		Owner:     sql.NullString{String: "ada", Valid: true},
+		Status:    sql.NullString{String: "frozen", Valid: true},
+		Sort:      "balance",
+		PageLimit: 25,
+	}).Return([]db.AdminListAccountsRow{{ID: 7, Owner: "ada"}}, nil)
+
+	server := newTestServer(t, store)
+	recorder := doJSON(t, server, http.MethodGet, "/admin/accounts?page_id=1&page_size=25&owner=ada&status=frozen&sort=balance", nil, "root")
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+	recorder = doJSON(t, server, http.MethodGet, "/admin/accounts?page_id=1&page_size=25&status=deleted", nil, "root")
+	require.Equal(t, http.StatusBadRequest, recorder.Code)
+}
+
 func TestAdminTransactionsValidation(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	store := mockdb.NewMockStore(ctrl)

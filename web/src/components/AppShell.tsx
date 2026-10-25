@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ReactNode, useSyncExternalStore } from "react";
 import useSWR from "swr";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Avatar } from "@/components/ui/Avatar";
@@ -13,6 +13,7 @@ import { Logo } from "@/components/ui/Logo";
 import { ToastProvider } from "@/components/ui/Toast";
 import { getCurrentUser } from "@/lib/api";
 import { clearSession, subscribeAuth, usernameSnapshot } from "@/lib/auth";
+import { navigateFresh } from "@/lib/hooks";
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "Home", icon: "home" },
@@ -148,13 +149,11 @@ function MobileTabBar({ pathname }: { pathname: string }) {
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const username = useSyncExternalStore(subscribeAuth, usernameSnapshot, () => null);
-
   function logout() {
     clearSession();
-    router.push("/login");
+    navigateFresh("/login");
   }
 
   return (

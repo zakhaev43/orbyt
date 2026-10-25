@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
 import { AdminFrame, Pager } from "@/components/admin/AdminFrame";
@@ -82,7 +83,17 @@ function UsersView() {
                         )}
                       </td>
                       <td className="tabular-nums px-3 py-2.5 text-right">
-                        {u.accounts}
+                        {u.accounts > 0 ? (
+                          <Link
+                            href={`/admin/accounts?owner=${encodeURIComponent(u.username)}`}
+                            className="font-medium text-brand hover:underline"
+                            title={`View ${u.username}'s accounts`}
+                          >
+                            {u.accounts}
+                          </Link>
+                        ) : (
+                          <span className="text-ink-muted">0</span>
+                        )}
                         {u.frozen_accounts > 0 && (
                           <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs text-warn">
                             <Icon name="snowflake" size={11} />

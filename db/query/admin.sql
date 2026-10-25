@@ -83,6 +83,35 @@ ORDER BY t.id DESC
 LIMIT sqlc.arg(page_limit)
 OFFSET sqlc.arg(page_offset);
 
+-- name: AdminListAccounts :many
+SELECT
+  a.id,
+  a.owner,
+  u.full_name,
+  a.currency,
+  a.balance,
+  a.status,
+  a.created_at,
+  (SELECT COUNT(*) FROM entries e WHERE e.account_id = a.id)::bigint AS entries,
+  COALESCE((SELECT MAX(e.created_at) FROM entries e WHERE e.account_id = a.id), a.created_at)::timestamptz AS last_activity
+FROM accounts a
+JOIN users u ON u.username = a.owner
+WHERE a.kind = 'customer'
+  AND (sqlc.narg(owner)::varchar IS NULL OR a.owner = sqlc.narg(owner))
+  AND (sqlc.narg(currency)::varchar IS NULL OR a.currency = sqlc.narg(currency))
+  AND (sqlc.narg(status)::varchar IS NULL OR a.status = sqlc.narg(status))
+  AND (
+    sqlc.narg(search)::varchar IS NULL
+    OR a.owner ILIKE '%' || sqlc.narg(search) || '%'
+    OR u.full_name ILIKE '%' || sqlc.narg(search) || '%'
+    OR a.id::text = sqlc.narg(search)
+  )
+ORDER BY
+  CASE WHEN sqlc.arg(sort)::varchar = 'balance' THEN a.balance END DESC,
+  a.id DESC
+LIMIT sqlc.arg(page_limit)
+OFFSET sqlc.arg(page_offset);
+
 -- name: AdminListUsers :many
 SELECT
   u.username,

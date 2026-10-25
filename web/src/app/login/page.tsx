@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthLayout, PasswordInput } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/Button";
@@ -9,11 +8,11 @@ import { Alert } from "@/components/ui/Feedback";
 import { Input, Label } from "@/components/ui/Field";
 import { ApiError, loginUser } from "@/lib/api";
 import { saveSession } from "@/lib/auth";
+import { navigateFresh } from "@/lib/hooks";
 import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 export default function LoginPage() {
   useDocumentTitle("Log in");
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +25,7 @@ export default function LoginPage() {
     try {
       const session = await loginUser({ username: username.trim(), password });
       saveSession(session);
-      router.push("/dashboard");
+      navigateFresh("/dashboard");
     } catch (err) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 404 || err.status === 400)) {
         setError("That username and password don't match.");

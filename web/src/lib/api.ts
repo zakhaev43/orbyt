@@ -283,6 +283,40 @@ export type AdminTransaction = {
   to_owner: string;
 };
 
+export type AdminAccount = {
+  id: number;
+  owner: string;
+  full_name: string;
+  currency: string;
+  balance: number;
+  status: AccountStatus;
+  created_at: string;
+  entries: number;
+  last_activity: string;
+};
+
+export function listAdminAccounts(params: {
+  page: number;
+  pageSize: number;
+  owner?: string;
+  currency?: string;
+  status?: string;
+  search?: string;
+  sort?: "newest" | "balance";
+}) {
+  return request<AdminAccount[]>(
+    `/admin/accounts?${query({
+      page_id: params.page,
+      page_size: params.pageSize,
+      owner: params.owner,
+      currency: params.currency,
+      status: params.status,
+      search: params.search,
+      sort: params.sort,
+    })}`,
+  );
+}
+
 export type AdminUser = {
   username: string;
   full_name: string;

@@ -16,6 +16,7 @@ type Querier interface {
 	AdminAccountSummary(ctx context.Context) ([]AdminAccountSummaryRow, error)
 	AdminCountUsers(ctx context.Context, since time.Time) (AdminCountUsersRow, error)
 	AdminDailyActivity(ctx context.Context, since time.Time) ([]AdminDailyActivityRow, error)
+	AdminListAccounts(ctx context.Context, arg AdminListAccountsParams) ([]AdminListAccountsRow, error)
 	// Every transaction kind has exactly one debit and one credit entry.
 	AdminListTransactions(ctx context.Context, arg AdminListTransactionsParams) ([]AdminListTransactionsRow, error)
 	AdminListUsers(ctx context.Context, arg AdminListUsersParams) ([]AdminListUsersRow, error)

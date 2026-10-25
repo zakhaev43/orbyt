@@ -13,6 +13,7 @@ import { getCurrentUser } from "@/lib/api";
 
 const TABS = [
   { href: "/admin", label: "Overview" },
+  { href: "/admin/accounts", label: "Accounts" },
   { href: "/admin/transactions", label: "Transactions" },
   { href: "/admin/users", label: "Users" },
 ];

@@ -66,6 +66,7 @@ func (server *Server) setUpRouter() {
 	adminRoutes.GET("/activity", server.adminActivity)
 	adminRoutes.GET("/transactions", server.adminTransactions)
 	adminRoutes.GET("/users", server.adminUsers)
+	adminRoutes.GET("/accounts", server.adminAccounts)
 
 	//They dont require auth middleware
 	router.POST("/users", server.createUser)

@@ -13,6 +13,14 @@ export function useActivity(accounts: Account[] | undefined, perAccount = 50) {
   return useSWR(key, () => loadActivity(accounts!, perAccount));
 }
 
+/**
+ * Navigates with a full page load whenever the signed-in user changes, so no
+ * cached data (profile, role, accounts) survives into the next session.
+ */
+export function navigateFresh(path: string) {
+  window.location.assign(path);
+}
+
 /** Revalidates every cache that depends on balances after money moves. */
 export function useRefreshMoney() {
   const { mutate } = useSWRConfig();

@@ -213,6 +213,39 @@ func (server *Server) adminTransactions(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, rows)
 }
 
+type adminAccountsRequest struct {
+	PageID   int32  `form:"page_id" binding:"required,min=1"`
+	PageSize int32  `form:"page_size" binding:"required,min=5,max=100"`
+	Owner    string `form:"owner" binding:"max=100"`
+	Currency string `form:"currency" binding:"omitempty,currency"`
+	Status   string `form:"status" binding:"omitempty,oneof=active frozen closed"`
+	Search   string `form:"search" binding:"max=100"`
+	Sort     string `form:"sort" binding:"omitempty,oneof=newest balance"`
+}
+
+func (server *Server) adminAccounts(ctx *gin.Context) {
+	var req adminAccountsRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	rows, err := server.store.AdminListAccounts(ctx, db.AdminListAccountsParams{
+		Owner:      optionalString(strings.TrimSpace(req.Owner)),
+		Currency:   optionalString(req.Currency),
+		Status:     optionalString(req.Status),
+		Search:     optionalString(strings.TrimSpace(req.Search)),
+		Sort:       req.Sort,
+		PageLimit:  req.PageSize,
+		PageOffset: (req.PageID - 1) * req.PageSize,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, rows)
+}
+
 type adminUsersRequest struct {
 	PageID   int32  `form:"page_id" binding:"required,min=1"`
 	PageSize int32  `form:"page_size" binding:"required,min=5,max=100"`

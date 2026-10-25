@@ -134,6 +134,99 @@ func (q *Queries) AdminDailyActivity(ctx context.Context, since time.Time) ([]Ad
 	return items, nil
 }
 
+const adminListAccounts = `-- name: AdminListAccounts :many
+SELECT
+  a.id,
+  a.owner,
+  u.full_name,
+  a.currency,
+  a.balance,
+  a.status,
+  a.created_at,
+  (SELECT COUNT(*) FROM entries e WHERE e.account_id = a.id)::bigint AS entries,
+  COALESCE((SELECT MAX(e.created_at) FROM entries e WHERE e.account_id = a.id), a.created_at)::timestamptz AS last_activity
+FROM accounts a
+JOIN users u ON u.username = a.owner
+WHERE a.kind = 'customer'
+  AND ($1::varchar IS NULL OR a.owner = $1)
+  AND ($2::varchar IS NULL OR a.currency = $2)
+  AND ($3::varchar IS NULL OR a.status = $3)
+  AND (
+    $4::varchar IS NULL
+    OR a.owner ILIKE '%' || $4 || '%'
+    OR u.full_name ILIKE '%' || $4 || '%'
+    OR a.id::text = $4
+  )
+ORDER BY
+  CASE WHEN $5::varchar = 'balance' THEN a.balance END DESC,
+  a.id DESC
+LIMIT $7
+OFFSET $6
+`
+
+type AdminListAccountsParams struct {
+	Owner      sql.NullString `json:"owner"`
+	Currency   sql.NullString `json:"currency"`
+	Status     sql.NullString `json:"status"`
+	Search     sql.NullString `json:"search"`
+	Sort       string         `json:"sort"`
+	PageOffset int32          `json:"page_offset"`
+	PageLimit  int32          `json:"page_limit"`
+}
+
+type AdminListAccountsRow struct {
+	ID           int64     `json:"id"`
+	Owner        string    `json:"owner"`
+	FullName     string    `json:"full_name"`
+	Currency     string    `json:"currency"`
+	Balance      int64     `json:"balance"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+	Entries      int64     `json:"entries"`
+	LastActivity time.Time `json:"last_activity"`
+}
+
+func (q *Queries) AdminListAccounts(ctx context.Context, arg AdminListAccountsParams) ([]AdminListAccountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, adminListAccounts,
+		arg.Owner,
+		arg.Currency,
+		arg.Status,
+		arg.Search,
+		arg.Sort,
+		arg.PageOffset,
+		arg.PageLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []AdminListAccountsRow{}
+	for rows.Next() {
+		var i AdminListAccountsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Owner,
+			&i.FullName,
+			&i.Currency,
+			&i.Balance,
+			&i.Status,
+			&i.CreatedAt,
+			&i.Entries,
+			&i.LastActivity,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const adminListTransactions = `-- name: AdminListTransactions :many
 SELECT
   t.id,
