@@ -61,6 +61,13 @@ func (server *Server) setUpRouter() {
 	authRoutes.GET("/ledger/verify", server.verifyLedger)
 	authRoutes.GET("/users/me", server.getCurrentUser)
 
+	adminRoutes := router.Group("/admin").Use(authMiddleware(server.tokenMaker), server.adminMiddleware())
+	adminRoutes.GET("/stats", server.adminStats)
+	adminRoutes.GET("/activity", server.adminActivity)
+	adminRoutes.GET("/transactions", server.adminTransactions)
+	adminRoutes.GET("/users", server.adminUsers)
+	adminRoutes.GET("/accounts", server.adminAccounts)
+
 	//They dont require auth middleware
 	router.POST("/users", server.createUser)
 	router.POST("/users/login", server.loginUser)

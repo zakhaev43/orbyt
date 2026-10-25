@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createTransaction = `-- name: CreateTransaction :one
@@ -14,25 +15,30 @@ INSERT INTO transactions (
   kind,
   currency,
   amount,
-  description
+  description,
+  created_at
 ) VALUES (
-  $1, $2, $3, $4
+  $1, $2, $3, $4,
+  COALESCE($5::timestamptz, now())
 ) RETURNING id, kind, status, currency, amount, description, created_at
 `
 
 type CreateTransactionParams struct {
-	Kind        string `json:"kind"`
-	Currency    string `json:"currency"`
-	Amount      int64  `json:"amount"`
-	Description string `json:"description"`
+	Kind        string       `json:"kind"`
+	Currency    string       `json:"currency"`
+	Amount      int64        `json:"amount"`
+	Description string       `json:"description"`
+	CreatedAt   sql.NullTime `json:"created_at"`
 }
 
+// created_at defaults to now(); only the provisioning tool backdates it.
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error) {
 	row := q.db.QueryRowContext(ctx, createTransaction,
 		arg.Kind,
 		arg.Currency,
 		arg.Amount,
 		arg.Description,
+		arg.CreatedAt,
 	)
 	var i Transaction
 	err := row.Scan(

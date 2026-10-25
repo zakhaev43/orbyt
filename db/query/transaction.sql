@@ -1,11 +1,14 @@
 -- name: CreateTransaction :one
+-- created_at defaults to now(); only the provisioning tool backdates it.
 INSERT INTO transactions (
   kind,
   currency,
   amount,
-  description
+  description,
+  created_at
 ) VALUES (
-  $1, $2, $3, $4
+  sqlc.arg(kind), sqlc.arg(currency), sqlc.arg(amount), sqlc.arg(description),
+  COALESCE(sqlc.narg(created_at)::timestamptz, now())
 ) RETURNING *;
 
 -- name: GetTransaction :one

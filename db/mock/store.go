@@ -12,6 +12,7 @@ package mockdb
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	uuid "github.com/google/uuid"
 	db "github.com/zakhaev43/orbyt/db/sqlc"
@@ -54,6 +55,126 @@ func (m *MockStore) AddAccountBalance(arg0 context.Context, arg1 db.AddAccountBa
 func (mr *MockStoreMockRecorder) AddAccountBalance(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAccountBalance", reflect.TypeOf((*MockStore)(nil).AddAccountBalance), arg0, arg1)
+}
+
+// AdminAccountSummary mocks base method.
+func (m *MockStore) AdminAccountSummary(arg0 context.Context) ([]db.AdminAccountSummaryRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminAccountSummary", arg0)
+	ret0, _ := ret[0].([]db.AdminAccountSummaryRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminAccountSummary indicates an expected call of AdminAccountSummary.
+func (mr *MockStoreMockRecorder) AdminAccountSummary(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminAccountSummary", reflect.TypeOf((*MockStore)(nil).AdminAccountSummary), arg0)
+}
+
+// AdminCountUsers mocks base method.
+func (m *MockStore) AdminCountUsers(arg0 context.Context, arg1 time.Time) (db.AdminCountUsersRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminCountUsers", arg0, arg1)
+	ret0, _ := ret[0].(db.AdminCountUsersRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminCountUsers indicates an expected call of AdminCountUsers.
+func (mr *MockStoreMockRecorder) AdminCountUsers(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminCountUsers", reflect.TypeOf((*MockStore)(nil).AdminCountUsers), arg0, arg1)
+}
+
+// AdminDailyActivity mocks base method.
+func (m *MockStore) AdminDailyActivity(arg0 context.Context, arg1 time.Time) ([]db.AdminDailyActivityRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminDailyActivity", arg0, arg1)
+	ret0, _ := ret[0].([]db.AdminDailyActivityRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminDailyActivity indicates an expected call of AdminDailyActivity.
+func (mr *MockStoreMockRecorder) AdminDailyActivity(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminDailyActivity", reflect.TypeOf((*MockStore)(nil).AdminDailyActivity), arg0, arg1)
+}
+
+// AdminListAccounts mocks base method.
+func (m *MockStore) AdminListAccounts(arg0 context.Context, arg1 db.AdminListAccountsParams) ([]db.AdminListAccountsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminListAccounts", arg0, arg1)
+	ret0, _ := ret[0].([]db.AdminListAccountsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminListAccounts indicates an expected call of AdminListAccounts.
+func (mr *MockStoreMockRecorder) AdminListAccounts(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminListAccounts", reflect.TypeOf((*MockStore)(nil).AdminListAccounts), arg0, arg1)
+}
+
+// AdminListTransactions mocks base method.
+func (m *MockStore) AdminListTransactions(arg0 context.Context, arg1 db.AdminListTransactionsParams) ([]db.AdminListTransactionsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminListTransactions", arg0, arg1)
+	ret0, _ := ret[0].([]db.AdminListTransactionsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminListTransactions indicates an expected call of AdminListTransactions.
+func (mr *MockStoreMockRecorder) AdminListTransactions(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminListTransactions", reflect.TypeOf((*MockStore)(nil).AdminListTransactions), arg0, arg1)
+}
+
+// AdminListUsers mocks base method.
+func (m *MockStore) AdminListUsers(arg0 context.Context, arg1 db.AdminListUsersParams) ([]db.AdminListUsersRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminListUsers", arg0, arg1)
+	ret0, _ := ret[0].([]db.AdminListUsersRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminListUsers indicates an expected call of AdminListUsers.
+func (mr *MockStoreMockRecorder) AdminListUsers(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminListUsers", reflect.TypeOf((*MockStore)(nil).AdminListUsers), arg0, arg1)
+}
+
+// AdminTopSenders mocks base method.
+func (m *MockStore) AdminTopSenders(arg0 context.Context, arg1 db.AdminTopSendersParams) ([]db.AdminTopSendersRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminTopSenders", arg0, arg1)
+	ret0, _ := ret[0].([]db.AdminTopSendersRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminTopSenders indicates an expected call of AdminTopSenders.
+func (mr *MockStoreMockRecorder) AdminTopSenders(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminTopSenders", reflect.TypeOf((*MockStore)(nil).AdminTopSenders), arg0, arg1)
+}
+
+// AdminTransactionSummary mocks base method.
+func (m *MockStore) AdminTransactionSummary(arg0 context.Context, arg1 time.Time) ([]db.AdminTransactionSummaryRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminTransactionSummary", arg0, arg1)
+	ret0, _ := ret[0].([]db.AdminTransactionSummaryRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminTransactionSummary indicates an expected call of AdminTransactionSummary.
+func (mr *MockStoreMockRecorder) AdminTransactionSummary(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminTransactionSummary", reflect.TypeOf((*MockStore)(nil).AdminTransactionSummary), arg0, arg1)
 }
 
 // CreateAccount mocks base method.
@@ -414,6 +535,21 @@ func (m *MockStore) SetEntryHash(arg0 context.Context, arg1 db.SetEntryHashParam
 func (mr *MockStoreMockRecorder) SetEntryHash(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEntryHash", reflect.TypeOf((*MockStore)(nil).SetEntryHash), arg0, arg1)
+}
+
+// SetUserRole mocks base method.
+func (m *MockStore) SetUserRole(arg0 context.Context, arg1 db.SetUserRoleParams) (db.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetUserRole", arg0, arg1)
+	ret0, _ := ret[0].(db.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetUserRole indicates an expected call of SetUserRole.
+func (mr *MockStoreMockRecorder) SetUserRole(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetUserRole", reflect.TypeOf((*MockStore)(nil).SetUserRole), arg0, arg1)
 }
 
 // TransferTx mocks base method.

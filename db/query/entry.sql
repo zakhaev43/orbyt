@@ -2,9 +2,11 @@
 INSERT INTO entries (
   account_id,
   amount,
-  transaction_id
+  transaction_id,
+  created_at
 ) VALUES (
-  $1, $2, $3
+  sqlc.arg(account_id), sqlc.arg(amount), sqlc.arg(transaction_id),
+  COALESCE(sqlc.narg(created_at)::timestamptz, now())
 ) RETURNING *;
 
 -- name: SetEntryHash :one

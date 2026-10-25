@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ReactNode, useSyncExternalStore } from "react";
+import { ReactNode, useEffect, useSyncExternalStore } from "react";
+import useSWR from "swr";
 import { usePathname, useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -9,8 +10,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ButtonLink } from "@/components/ui/Button";
 import { Icon, IconName } from "@/components/ui/Icon";
 import { Logo } from "@/components/ui/Logo";
+import { Spinner } from "@/components/ui/Spinner";
 import { ToastProvider } from "@/components/ui/Toast";
+import { getCurrentUser } from "@/lib/api";
 import { clearSession, subscribeAuth, usernameSnapshot } from "@/lib/auth";
+import { navigateFresh } from "@/lib/hooks";
 
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/dashboard", label: "Home", icon: "home" },
@@ -112,7 +116,8 @@ function MobileTabBar({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-hairline bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 grid border-t border-hairline bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden"
+      style={{ gridTemplateColumns: `repeat(${NAV.length}, minmax(0, 1fr))` }}
     >
       {NAV.map((item) => {
         const active = isActive(pathname, item.href);
@@ -134,18 +139,38 @@ function MobileTabBar({ pathname }: { pathname: string }) {
   );
 }
 
-export default function AppShell({ children }: { children: ReactNode }) {
+// Admins are operators with no money of their own; they get the admin console
+// instead of the customer app.
+function CustomerOnly({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { data: me } = useSWR("me", getCurrentUser);
+  const isAdmin = me?.role === "admin";
+
+  useEffect(() => {
+    if (isAdmin) router.replace("/admin");
+  }, [isAdmin, router]);
+
+  if (!me || isAdmin) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-32 text-ink-muted">
+        <Spinner size={24} />
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
+export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const username = useSyncExternalStore(subscribeAuth, usernameSnapshot, () => null);
-
   function logout() {
     clearSession();
-    router.push("/login");
+    navigateFresh("/login");
   }
 
   return (
     <AuthGuard>
+      <CustomerOnly>
       <ToastProvider>
         <Sidebar pathname={pathname} username={username} onLogout={logout} />
         <MobileTopBar username={username} onLogout={logout} />
@@ -154,6 +179,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </main>
         <MobileTabBar pathname={pathname} />
       </ToastProvider>
+      </CustomerOnly>
     </AuthGuard>
   );
 }
