@@ -16,7 +16,10 @@ type Server struct {
 	router     *gin.Engine
 	tokenMaker token.Maker
 	config     util.Config
+	auditKey   []byte
 }
+
+const minAuditKeyLength = 32
 
 func NewServer(config util.Config, store db.Store) (*Server, error) {
 
@@ -27,10 +30,15 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		return nil, fmt.Errorf("cant create token matter\n%w", err)
 	}
 
+	if len(config.AuditSigningKey) < minAuditKeyLength {
+		return nil, fmt.Errorf("AUDIT_SIGNING_KEY must be at least %d characters", minAuditKeyLength)
+	}
+
 	server := &Server{
 		store:      store,
 		tokenMaker: tokenMaker,
 		config:     config,
+		auditKey:   []byte(config.AuditSigningKey),
 	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
@@ -45,7 +53,7 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 func (server *Server) setUpRouter() {
 	router := gin.Default()
-	router.Use(corsMiddleware(server.config.AllowedOrigin))
+	router.Use(corsMiddleware(server.config.AllowedOrigin), server.auditMiddleware())
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 	authRoutes.POST("/accounts", server.createAccount)
 	authRoutes.GET("/accounts/:id", server.getAccount)
@@ -67,6 +75,9 @@ func (server *Server) setUpRouter() {
 	adminRoutes.GET("/transactions", server.adminTransactions)
 	adminRoutes.GET("/users", server.adminUsers)
 	adminRoutes.GET("/accounts", server.adminAccounts)
+	// Read-only on purpose: there is no route that edits or deletes audit events.
+	adminRoutes.GET("/audit-logs", server.listAuditLogs)
+	adminRoutes.GET("/audit-logs/verify", server.verifyAuditLog)
 
 	//They dont require auth middleware
 	router.POST("/users", server.createUser)

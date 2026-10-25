@@ -29,6 +29,8 @@ func (server *Server) renewAccessToken(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
+	auditActor(ctx, refreshPayload.Username)
+	auditTarget(ctx, "session", refreshPayload.ID)
 
 	session, err := server.store.GetSession(ctx, refreshPayload.ID)
 	if err != nil {

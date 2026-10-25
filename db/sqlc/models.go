@@ -6,6 +6,7 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,6 +20,27 @@ type Account struct {
 	CreatedAt time.Time `json:"created_at"`
 	Status    string    `json:"status"`
 	Kind      string    `json:"kind"`
+}
+
+type AuditLog struct {
+	ID         int64     `json:"id"`
+	OccurredAt time.Time `json:"occurred_at"`
+	RequestID  string    `json:"request_id"`
+	// username as claimed or authenticated; empty when anonymous
+	Actor      string          `json:"actor"`
+	Action     string          `json:"action"`
+	Outcome    string          `json:"outcome"`
+	TargetType string          `json:"target_type"`
+	TargetID   string          `json:"target_id"`
+	Method     string          `json:"method"`
+	Path       string          `json:"path"`
+	StatusCode int32           `json:"status_code"`
+	Reason     string          `json:"reason"`
+	ClientIp   string          `json:"client_ip"`
+	UserAgent  string          `json:"user_agent"`
+	Details    json.RawMessage `json:"details"`
+	PrevHash   string          `json:"prev_hash"`
+	Hash       string          `json:"hash"`
 }
 
 type Entry struct {

@@ -23,6 +23,7 @@ type Querier interface {
 	AdminTopSenders(ctx context.Context, arg AdminTopSendersParams) ([]AdminTopSendersRow, error)
 	AdminTransactionSummary(ctx context.Context, since time.Time) ([]AdminTransactionSummaryRow, error)
 	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
+	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) (AuditLog, error)
 	CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	// created_at defaults to now(); only the provisioning tool backdates it.
@@ -34,6 +35,7 @@ type Querier interface {
 	// reference this row via FK (which take FOR KEY SHARE) isn't blocked.
 	GetAccountForUpdate(ctx context.Context, id int64) (Account, error)
 	GetEntry(ctx context.Context, id int64) (Entry, error)
+	GetLastAuditHash(ctx context.Context) (string, error)
 	GetLastEntryHash(ctx context.Context) (string, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetSystemAccount(ctx context.Context, currency string) (Account, error)
@@ -43,11 +45,17 @@ type Querier interface {
 	ListAccountStatement(ctx context.Context, arg ListAccountStatementParams) ([]ListAccountStatementRow, error)
 	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error)
 	ListAllEntries(ctx context.Context) ([]Entry, error)
+	// Newest first, paged by keyset on id so pages stay stable while new events arrive.
+	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error)
+	ListAuditLogsAfter(ctx context.Context, arg ListAuditLogsAfterParams) ([]AuditLog, error)
 	ListBalanceMismatches(ctx context.Context) ([]ListBalanceMismatchesRow, error)
 	ListEntries(ctx context.Context, arg ListEntriesParams) ([]Entry, error)
 	ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error)
 	// Should always be empty: the entries_balanced trigger rejects these at commit.
 	ListUnbalancedTransactions(ctx context.Context) ([]ListUnbalancedTransactionsRow, error)
+	// Serialises appends for the rest of the transaction so ids follow chain order.
+	LockAuditChain(ctx context.Context) error
+	NextAuditLogID(ctx context.Context) (int64, error)
 	SetEntryHash(ctx context.Context, arg SetEntryHashParams) (Entry, error)
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) (User, error)
 	// Conditional so it can't race a concurrent transfer: the row lock taken by

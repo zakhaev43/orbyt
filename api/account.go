@@ -26,6 +26,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	}
 
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	auditDetail(ctx, "currency", req.Currency)
 
 	account, err := server.store.CreateAccount(ctx, db.CreateAccountParams{
 		Owner:    authPayload.Username,
@@ -41,6 +42,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	auditTarget(ctx, "account", account.ID)
 	ctx.JSON(http.StatusOK, account)
 }
 
@@ -133,6 +135,7 @@ func (server *Server) createDeposit(ctx *gin.Context) {
 		return
 	}
 
+	auditDetail(ctx, "amount", req.Amount)
 	if _, ok := server.loadOwnedAccount(ctx, uri.ID); !ok {
 		return
 	}
@@ -152,6 +155,8 @@ func (server *Server) createDeposit(ctx *gin.Context) {
 		return
 	}
 
+	auditDetail(ctx, "currency", result.Account.Currency)
+	auditDetail(ctx, "transaction_id", result.Transaction.ID)
 	ctx.JSON(http.StatusOK, depositResponse{Transaction: result.Transaction, Account: result.Account})
 }
 
@@ -188,6 +193,7 @@ func (server *Server) changeAccountStatus(ctx *gin.Context, t statusTransition) 
 		return
 	}
 
+	auditDetail(ctx, "status_before", account.Status)
 	if account.Status != t.from {
 		ctx.JSON(http.StatusConflict, errorResponse(fmt.Errorf("account is %s; only %s accounts can become %s", account.Status, t.from, t.to)))
 		return
@@ -212,6 +218,7 @@ func (server *Server) changeAccountStatus(ctx *gin.Context, t statusTransition) 
 		return
 	}
 
+	auditDetail(ctx, "status_after", updated.Status)
 	ctx.JSON(http.StatusOK, updated)
 }
 

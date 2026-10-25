@@ -20,6 +20,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: "/admin/transactions", label: "Transactions", icon: "activity" },
   { href: "/admin/users", label: "Users", icon: "user" },
   { href: "/admin/ledger", label: "Ledger", icon: "shield" },
+  { href: "/admin/audit", label: "Audit", icon: "file-text" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -120,7 +121,7 @@ function MobileTabBar({ pathname }: { pathname: string }) {
   return (
     <nav
       aria-label="Admin"
-      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 bg-[#0b1020] pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 bg-[#0b1020] pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       {NAV.map((item) => {
         const active = isActive(pathname, item.href);

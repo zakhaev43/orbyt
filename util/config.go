@@ -17,6 +17,9 @@ type Config struct {
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 	AllowedOrigin        string        `mapstructure:"ALLOWED_ORIGIN"`
+	// AuditSigningKey seals the audit log. Keep it out of the database's
+	// reach: anyone holding it can forge audit history.
+	AuditSigningKey string `mapstructure:"AUDIT_SIGNING_KEY"`
 }
 
 // LoadConfig reads configuration from environment file or variables

@@ -52,6 +52,8 @@ func (server *Server) createUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	auditActor(ctx, req.Username)
+	auditTarget(ctx, "user", req.Username)
 
 	hashedPassword, err := util.HashPassword(req.Password)
 
@@ -125,6 +127,8 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 
 	}
+	auditActor(ctx, req.Username)
+	auditTarget(ctx, "user", req.Username)
 
 	user, err := server.store.GetUser(ctx, req.Username)
 
@@ -184,6 +188,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
+	auditDetail(ctx, "session_id", session.ID)
 	rsp := loginUserResponse{
 		SessionID:             session.ID,
 		AccessToken:           accessToken,

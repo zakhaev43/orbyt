@@ -70,7 +70,15 @@ function UsersView() {
                           <Avatar name={u.full_name || u.username} size={32} />
                           <div className="min-w-0">
                             <div className="truncate font-medium">{u.full_name}</div>
-                            <div className="truncate text-xs text-ink-muted">@{u.username}</div>
+                            <div className="truncate text-xs text-ink-muted">
+                              @{u.username} ·{" "}
+                              <Link
+                                href={`/admin/audit?actor=${encodeURIComponent(u.username)}`}
+                                className="font-medium text-brand hover:underline"
+                              >
+                                audit trail
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       </td>

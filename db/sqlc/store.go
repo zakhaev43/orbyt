@@ -50,6 +50,8 @@ type Store interface {
 	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 	DepositTx(ctx context.Context, arg DepositTxParams) (DepositTxResult, error)
 	VerifyLedger(ctx context.Context) (LedgerReport, error)
+	AppendAuditLog(ctx context.Context, key []byte, event AuditEvent) (AuditLog, error)
+	VerifyAuditLog(ctx context.Context, key []byte) (AuditReport, error)
 }
 
 // SQLStore provides all functions to execute SQL queries and transactions

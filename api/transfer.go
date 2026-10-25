@@ -57,6 +57,10 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
+	auditDetail(ctx, "from_account_id", req.FromAccountID)
+	auditDetail(ctx, "to_account_id", req.ToAccountID)
+	auditDetail(ctx, "amount", req.Amount)
+	auditDetail(ctx, "currency", req.Currency)
 	if _, ok := server.loadOwnedAccount(ctx, req.FromAccountID); !ok {
 		return
 	}
@@ -73,6 +77,7 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
+	auditTarget(ctx, "transaction", result.Transaction.ID)
 	ctx.JSON(http.StatusOK, transferResponse{
 		Transaction: result.Transaction,
 		Transfer:    newTransferRecord(result.Transfer),

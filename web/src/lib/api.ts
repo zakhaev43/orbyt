@@ -355,6 +355,67 @@ export function listAdminUsers(params: { page: number; pageSize: number; search?
   );
 }
 
+export type AuditOutcome = "success" | "failure" | "denied";
+
+export type AuditEvent = {
+  id: number;
+  occurred_at: string;
+  request_id: string;
+  actor: string;
+  action: string;
+  outcome: AuditOutcome;
+  target_type: string;
+  target_id: string;
+  method: string;
+  path: string;
+  status_code: number;
+  reason: string;
+  client_ip: string;
+  user_agent: string;
+  details: Record<string, unknown>;
+  prev_hash: string;
+  hash: string;
+};
+
+export type AuditPage = { items: AuditEvent[]; next_before_id: number | null };
+
+export type AuditVerification = {
+  valid: boolean;
+  entries_checked: number;
+  broken_entry_id?: number;
+  head_id?: number;
+  head_hash?: string;
+  verified_at: string;
+};
+
+export function listAuditLogs(params: {
+  pageSize: number;
+  beforeId?: number;
+  actor?: string;
+  action?: string;
+  outcome?: string;
+  targetType?: string;
+  targetId?: string;
+  sinceHours?: number;
+}) {
+  return request<AuditPage>(
+    `/admin/audit-logs?${query({
+      page_size: params.pageSize,
+      before_id: params.beforeId,
+      actor: params.actor,
+      action: params.action,
+      outcome: params.outcome,
+      target_type: params.targetType,
+      target_id: params.targetId,
+      since_hours: params.sinceHours,
+    })}`,
+  );
+}
+
+export function verifyAuditLog() {
+  return request<AuditVerification>("/admin/audit-logs/verify");
+}
+
 export function errorMessage(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback;
 }

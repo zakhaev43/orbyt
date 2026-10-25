@@ -177,6 +177,21 @@ func (mr *MockStoreMockRecorder) AdminTransactionSummary(arg0, arg1 any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminTransactionSummary", reflect.TypeOf((*MockStore)(nil).AdminTransactionSummary), arg0, arg1)
 }
 
+// AppendAuditLog mocks base method.
+func (m *MockStore) AppendAuditLog(arg0 context.Context, arg1 []byte, arg2 db.AuditEvent) (db.AuditLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AppendAuditLog", arg0, arg1, arg2)
+	ret0, _ := ret[0].(db.AuditLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AppendAuditLog indicates an expected call of AppendAuditLog.
+func (mr *MockStoreMockRecorder) AppendAuditLog(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendAuditLog", reflect.TypeOf((*MockStore)(nil).AppendAuditLog), arg0, arg1, arg2)
+}
+
 // CreateAccount mocks base method.
 func (m *MockStore) CreateAccount(arg0 context.Context, arg1 db.CreateAccountParams) (db.Account, error) {
 	m.ctrl.T.Helper()
@@ -190,6 +205,21 @@ func (m *MockStore) CreateAccount(arg0 context.Context, arg1 db.CreateAccountPar
 func (mr *MockStoreMockRecorder) CreateAccount(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccount", reflect.TypeOf((*MockStore)(nil).CreateAccount), arg0, arg1)
+}
+
+// CreateAuditLog mocks base method.
+func (m *MockStore) CreateAuditLog(arg0 context.Context, arg1 db.CreateAuditLogParams) (db.AuditLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAuditLog", arg0, arg1)
+	ret0, _ := ret[0].(db.AuditLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateAuditLog indicates an expected call of CreateAuditLog.
+func (mr *MockStoreMockRecorder) CreateAuditLog(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAuditLog", reflect.TypeOf((*MockStore)(nil).CreateAuditLog), arg0, arg1)
 }
 
 // CreateEntry mocks base method.
@@ -327,6 +357,21 @@ func (mr *MockStoreMockRecorder) GetEntry(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntry", reflect.TypeOf((*MockStore)(nil).GetEntry), arg0, arg1)
 }
 
+// GetLastAuditHash mocks base method.
+func (m *MockStore) GetLastAuditHash(arg0 context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLastAuditHash", arg0)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLastAuditHash indicates an expected call of GetLastAuditHash.
+func (mr *MockStoreMockRecorder) GetLastAuditHash(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastAuditHash", reflect.TypeOf((*MockStore)(nil).GetLastAuditHash), arg0)
+}
+
 // GetLastEntryHash mocks base method.
 func (m *MockStore) GetLastEntryHash(arg0 context.Context) (string, error) {
 	m.ctrl.T.Helper()
@@ -462,6 +507,36 @@ func (mr *MockStoreMockRecorder) ListAllEntries(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllEntries", reflect.TypeOf((*MockStore)(nil).ListAllEntries), arg0)
 }
 
+// ListAuditLogs mocks base method.
+func (m *MockStore) ListAuditLogs(arg0 context.Context, arg1 db.ListAuditLogsParams) ([]db.AuditLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAuditLogs", arg0, arg1)
+	ret0, _ := ret[0].([]db.AuditLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAuditLogs indicates an expected call of ListAuditLogs.
+func (mr *MockStoreMockRecorder) ListAuditLogs(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAuditLogs", reflect.TypeOf((*MockStore)(nil).ListAuditLogs), arg0, arg1)
+}
+
+// ListAuditLogsAfter mocks base method.
+func (m *MockStore) ListAuditLogsAfter(arg0 context.Context, arg1 db.ListAuditLogsAfterParams) ([]db.AuditLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAuditLogsAfter", arg0, arg1)
+	ret0, _ := ret[0].([]db.AuditLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAuditLogsAfter indicates an expected call of ListAuditLogsAfter.
+func (mr *MockStoreMockRecorder) ListAuditLogsAfter(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAuditLogsAfter", reflect.TypeOf((*MockStore)(nil).ListAuditLogsAfter), arg0, arg1)
+}
+
 // ListBalanceMismatches mocks base method.
 func (m *MockStore) ListBalanceMismatches(arg0 context.Context) ([]db.ListBalanceMismatchesRow, error) {
 	m.ctrl.T.Helper()
@@ -522,6 +597,35 @@ func (mr *MockStoreMockRecorder) ListUnbalancedTransactions(arg0 any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUnbalancedTransactions", reflect.TypeOf((*MockStore)(nil).ListUnbalancedTransactions), arg0)
 }
 
+// LockAuditChain mocks base method.
+func (m *MockStore) LockAuditChain(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LockAuditChain", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LockAuditChain indicates an expected call of LockAuditChain.
+func (mr *MockStoreMockRecorder) LockAuditChain(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockAuditChain", reflect.TypeOf((*MockStore)(nil).LockAuditChain), arg0)
+}
+
+// NextAuditLogID mocks base method.
+func (m *MockStore) NextAuditLogID(arg0 context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NextAuditLogID", arg0)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NextAuditLogID indicates an expected call of NextAuditLogID.
+func (mr *MockStoreMockRecorder) NextAuditLogID(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NextAuditLogID", reflect.TypeOf((*MockStore)(nil).NextAuditLogID), arg0)
+}
+
 // SetEntryHash mocks base method.
 func (m *MockStore) SetEntryHash(arg0 context.Context, arg1 db.SetEntryHashParams) (db.Entry, error) {
 	m.ctrl.T.Helper()
@@ -580,6 +684,21 @@ func (m *MockStore) UpdateAccountStatus(arg0 context.Context, arg1 db.UpdateAcco
 func (mr *MockStoreMockRecorder) UpdateAccountStatus(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountStatus", reflect.TypeOf((*MockStore)(nil).UpdateAccountStatus), arg0, arg1)
+}
+
+// VerifyAuditLog mocks base method.
+func (m *MockStore) VerifyAuditLog(arg0 context.Context, arg1 []byte) (db.AuditReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyAuditLog", arg0, arg1)
+	ret0, _ := ret[0].(db.AuditReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VerifyAuditLog indicates an expected call of VerifyAuditLog.
+func (mr *MockStoreMockRecorder) VerifyAuditLog(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyAuditLog", reflect.TypeOf((*MockStore)(nil).VerifyAuditLog), arg0, arg1)
 }
 
 // VerifyLedger mocks base method.
