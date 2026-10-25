@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { AdminFrame, SegmentedControl } from "@/components/admin/AdminFrame";
+import { SegmentedControl } from "@/components/admin/controls";
 import { TransactionTable } from "@/components/admin/TransactionTable";
-import AppShell from "@/components/AppShell";
+import AdminShell from "@/components/admin/AdminShell";
+import { LedgerStatusPill } from "@/components/LedgerStatus";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { StackedColumnChart } from "@/components/charts/StackedColumnChart";
 import { Avatar, CurrencyBadge } from "@/components/ui/Avatar";
@@ -110,6 +112,7 @@ function OverviewView() {
 
   return (
     <div className="space-y-6">
+      <PageHeader title="Overview" description="Platform health and activity at a glance." action={<LedgerStatusPill />} />
       {stats.error && <ErrorBanner message={errorMessage(stats.error, "Couldn't load platform stats.")} />}
 
       <section aria-label="Key figures" className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -295,10 +298,8 @@ function OverviewView() {
 
 export default function AdminPage() {
   return (
-    <AppShell>
-      <AdminFrame>
+    <AdminShell>
         <OverviewView />
-      </AdminFrame>
-    </AppShell>
+    </AdminShell>
   );
 }

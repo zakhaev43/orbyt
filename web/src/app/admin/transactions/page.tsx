@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { AdminFrame, Pager, SegmentedControl } from "@/components/admin/AdminFrame";
+import { Pager, SegmentedControl } from "@/components/admin/controls";
 import { TransactionTable } from "@/components/admin/TransactionTable";
-import AppShell from "@/components/AppShell";
+import AdminShell from "@/components/admin/AdminShell";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { EmptyState, ErrorBanner, ListSkeleton } from "@/components/ui/Feedback";
 import { errorMessage, listAdminTransactions } from "@/lib/api";
@@ -25,6 +26,7 @@ function TransactionsView() {
 
   return (
     <div className="space-y-4">
+      <PageHeader title="Transactions" description="Every movement of money on the platform, newest first." />
       <div className="flex flex-wrap gap-3">
         <SegmentedControl
           label="Type"
@@ -70,10 +72,8 @@ function TransactionsView() {
 
 export default function AdminTransactionsPage() {
   return (
-    <AppShell>
-      <AdminFrame>
+    <AdminShell>
         <TransactionsView />
-      </AdminFrame>
-    </AppShell>
+    </AdminShell>
   );
 }

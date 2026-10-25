@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
-import { AdminFrame, Pager } from "@/components/admin/AdminFrame";
-import AppShell from "@/components/AppShell";
+import { Pager } from "@/components/admin/controls";
+import AdminShell from "@/components/admin/AdminShell";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -30,6 +31,7 @@ function UsersView() {
 
   return (
     <div className="space-y-4">
+      <PageHeader title="Users" description="Everyone registered on Orbyt." />
       <Input
         icon="search"
         placeholder="Search by name, username or email"
@@ -117,10 +119,8 @@ function UsersView() {
 
 export default function AdminUsersPage() {
   return (
-    <AppShell>
-      <AdminFrame>
+    <AdminShell>
         <UsersView />
-      </AdminFrame>
-    </AppShell>
+    </AdminShell>
   );
 }

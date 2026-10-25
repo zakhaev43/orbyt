@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import useSWR from "swr";
-import { AdminFrame, Pager, SegmentedControl } from "@/components/admin/AdminFrame";
-import AppShell from "@/components/AppShell";
+import { Pager, SegmentedControl } from "@/components/admin/controls";
+import AdminShell from "@/components/admin/AdminShell";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Avatar, CurrencyBadge } from "@/components/ui/Avatar";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -45,6 +46,7 @@ function AccountsView() {
 
   return (
     <div className="space-y-4">
+      <PageHeader title="Accounts" description="Every customer account and its balance." />
       {owner && (
         <div className="flex items-center gap-2 rounded-xl bg-brand-soft px-3.5 py-2.5 text-sm text-brand">
           <Icon name="user" size={16} />
@@ -168,12 +170,10 @@ function AccountsView() {
 
 export default function AdminAccountsPage() {
   return (
-    <AppShell>
-      <AdminFrame>
+    <AdminShell>
         <Suspense fallback={<ListSkeleton rows={8} />}>
           <AccountsView />
         </Suspense>
-      </AdminFrame>
-    </AppShell>
+    </AdminShell>
   );
 }

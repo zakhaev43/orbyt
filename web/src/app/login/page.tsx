@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       const session = await loginUser({ username: username.trim(), password });
       saveSession(session);
-      navigateFresh("/dashboard");
+      navigateFresh(session.user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 404 || err.status === 400)) {
         setError("That username and password don't match.");
