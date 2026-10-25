@@ -38,11 +38,8 @@ jobs:
       with:
         go-version: '1.26.5'
 
-    - name: Install golang-migrate
-      run: |
-          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz | tar xvz
-          sudo mv migrate /usr/local/bin/
-    - name: run migrations
-      run: make migrateup
+    # The db tests apply migrations themselves in TestMain.
     - name: Test
-      run: make test
+      env:
+        DB_SOURCE: postgresql://root:secret@localhost:5432/orbyt?sslmode=disable
+      run: go test -count=1 -cover ./...
